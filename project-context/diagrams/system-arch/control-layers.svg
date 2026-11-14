@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="control-layers-title control-layers-desc" id="control-layers-root">
+      <title id="control-layers-title">Where each control is enforced on a model request</title>
+      <desc id="control-layers-desc">Five enforcement layers a model request passes through, from session checks and prompt assembly to crew configuration, output checks and human review, each listing its control register IDs and who enforces it.</desc>
+      <defs>
+      <style>#control-layers-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #control-layers-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #control-layers-root .scroll { overflow-x: auto; }</style>
+        <pattern id="control-layers-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="0.9" fill="#2d3142" fill-opacity="0.10"/>
+        </pattern>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+      <rect width="100%" height="100%" fill="url(#control-layers-dots)" opacity="0.55"/>
+
+      <!-- Direction column -->
+      <text x="48" y="68" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">REQUEST</text>
+      <line x1="80" y1="80" x2="80" y2="392" stroke="#2d3142" stroke-width="1" stroke-opacity="0.30"/>
+      <polygon points="76,392 84,392 80,400" fill="#4f5d75"/>
+      <text x="44" y="416" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">EFFECT</text>
+
+      <!-- Stack edges -->
+      <line x1="120" y1="80" x2="960" y2="80" stroke="#2d3142" stroke-width="1" stroke-opacity="0.12"/>
+      <line x1="120" y1="400" x2="960" y2="400" stroke="#2d3142" stroke-width="1" stroke-opacity="0.12"/>
+
+      <!-- L1 Session & API -->
+      <rect x="120" y="80" width="840" height="64" fill="#ffffff"/>
+      <line x1="120" y1="144" x2="960" y2="144" stroke="#2d3142" stroke-width="1" stroke-opacity="0.12"/>
+      <text x="140" y="116" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L1</text>
+      <text x="184" y="118" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', system-ui, sans-serif">Session &amp; API</text>
+      <text x="400" y="117" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, monospace">CR-011 actor · CR-010 rate + spend · CR-014 publish gate</text>
+      <text x="940" y="117" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">code · every call</text>
+
+      <!-- L2 Prompt assembly (focal) -->
+      <rect x="120" y="144" width="840" height="64" fill="#bf4520" fill-opacity="0.08"/>
+      <rect x="120" y="144" width="840" height="64" fill="none" stroke="#bf4520" stroke-width="1"/>
+      <text x="140" y="180" fill="#bf4520" font-size="8" font-weight="600" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L2</text>
+      <text x="184" y="182" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', system-ui, sans-serif">Prompt assembly</text>
+      <text x="400" y="181" fill="#bf4520" font-size="10" font-family="'Geist Mono', ui-monospace, monospace">CR-001 eligible only · CR-002 allowlist · CR-003 delimit</text>
+      <text x="940" y="181" fill="#bf4520" font-size="10" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">code · before call</text>
+
+      <!-- L3 Crew config -->
+      <rect x="120" y="208" width="840" height="64" fill="#f5f5f5"/>
+      <line x1="120" y1="272" x2="960" y2="272" stroke="#2d3142" stroke-width="1" stroke-opacity="0.12"/>
+      <text x="140" y="244" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L3</text>
+      <text x="184" y="246" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', system-ui, sans-serif">Crew config</text>
+      <text x="400" y="245" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, monospace">CR-008 zero tools · CR-009 no write path</text>
+      <text x="940" y="245" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">code · at boot</text>
+
+      <!-- L4 Output checks -->
+      <rect x="120" y="272" width="840" height="64" fill="#ececec"/>
+      <line x1="120" y1="336" x2="960" y2="336" stroke="#2d3142" stroke-width="1" stroke-opacity="0.12"/>
+      <text x="140" y="308" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L4</text>
+      <text x="184" y="310" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', system-ui, sans-serif">Output checks</text>
+      <text x="400" y="309" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, monospace">CR-005 schema · CR-006 grounding · CR-007, CR-015 leaks</text>
+      <text x="940" y="309" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">code · after call</text>
+
+      <!-- L5 Human review -->
+      <rect x="120" y="336" width="840" height="64" fill="#ececec"/>
+      <text x="140" y="372" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">L5</text>
+      <text x="184" y="374" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', system-ui, sans-serif">Human review</text>
+      <text x="400" y="373" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, monospace">user accepts drafts · admin approves every event</text>
+      <text x="940" y="373" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">human · before effect</text>
+
+      <!-- Caption -->
+      <text x="120" y="448" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">FOCAL LAYER</text>
+      <text x="224" y="448" fill="#4f5d75" font-size="12" font-style="italic" font-family="'Instrument Serif', serif">Privacy is decided before the model sees anything. Everything fails closed except CR-004 ranking skew and CR-013 logging.</text>
+      <text x="120" y="472" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">MEASURED</text>
+      <text x="224" y="472" fill="#4f5d75" font-size="9" font-family="'Geist', system-ui, sans-serif">CR-004 injection skew and CR-012 fairness are eval-gated before release, not checked per request.</text>
+    </svg>

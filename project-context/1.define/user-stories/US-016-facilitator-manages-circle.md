@@ -27,6 +27,7 @@ As a circle facilitator, I want to edit my circle's details, approve or decline 
 1. Only the circle's facilitator or the admin can edit details, admission policy and member-list visibility.
 2. The facilitator can approve or decline pending join requests.
 3. Facilitator powers give no access to members' private pair data (MN-006).
+4. A facilitator can view the *matching only* profile fields of their own circle's members and pending applicants, and of no one else; each view is logged (MD-022, AC-020).
 
 ### 4. Scope Notes
 
@@ -35,7 +36,7 @@ As a circle facilitator, I want to edit my circle's details, approve or decline 
 
 ### 5. Traceability
 
-- **PRD Anchors**: FR-010, MD-009
+- **PRD Anchors**: FR-010, MD-009, MD-022, AC-020
 - **Related SFS**: to be created by `@system.arch` (`project-context/1.define/sfs/`)
 
 ## Sources
@@ -56,3 +57,4 @@ As a circle facilitator, I want to edit my circle's details, approve or decline 
 ## Audit
 
 - 2026-11-10 — persona: `product-mgr` — action: `*create-stories` — runtime resolved: `crewai`
+- 2026-11-14 — persona: `product-mgr` — action: `*create-stories` (update) — added AC4 on facilitator access to *matching only* fields (OQ-11).

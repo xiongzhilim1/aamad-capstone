@@ -71,6 +71,11 @@ No application pattern is selected here; that belongs to `@system.arch`.
 | MD-015 | Optional follow-up self-report for an accepted pair | requirement | Submitting a report more than once does not change its count; a pair is counted once; "no report" is stored as a different value from "reported no catch-up" |
 | MD-016 | Funnel metrics in separate units | requirement | The metrics view reports opportunities, opt-ins, requests, acceptances and follow-ups as separate counts with their denominators, and labels them synthetic |
 | MD-017 | Directory, discovery, connection and circles work on made-up data | assumption | The seed dataset covers all three stages, at least two events (one approved, one pending), at least two circles (one faith-tagged), and blocked and declined cases |
+| MD-018 | Short onboarding for new participants: name and stage → what I'm looking for → interests and challenges → discovery choice | requirement | A new participant reaches a usable profile in ≤ 4 screens; every field after display name and stage can be skipped and filled in later; the last screen offers directory consent preselected to "not listed" |
+| MD-019 | AI profile assistant: free text about interests, challenges and what I'm looking for is turned into structured fields that the user reviews | requirement | The assistant returns a draft of tags plus a one-line summary; nothing is saved until the user edits or accepts it; the user can discard the draft and enter fields by hand |
+| MD-020 | Per-field visibility: each profile field is either *shown on profile* or *matching only* | requirement | A *matching only* field never appears in another participant's API response or UI. It may be sent to the suggestion model when it is a permitted matching field (MD-021), and it is visible to staff only as MD-022 allows |
+| MD-022 | Staff access to *matching only* fields (OQ-11 resolved) | requirement | The **admin** can view any participant's *matching only* fields; a **circle facilitator** can view them only for members of, and pending applicants to, their own circle; **organisers have no access**. Every staff view is logged (viewer, subject, fields, time), and the user is told who can see these fields at the moment they choose *matching only* |
+| MD-021 | Permitted matching fields (OQ-03 resolved) | requirement | The suggestion model input contains only: stage, looking-for, interests, challenges, industry (a hint, not a required match), meeting preferences (mode, time window, coarse area), the verified one-line summary, and faith context only when its matching opt-in is on; nothing else |
 
 #### Must not do
 
@@ -88,6 +93,10 @@ No application pattern is selected here; that belongs to `@system.arch`.
 | MN-010 | No invented venue listings | requirement | Every seeded venue is marked synthetic or comes from operator-supplied data |
 | MN-011 | Authorization is enforced on the server, not only by hiding buttons | requirement | Direct API calls with a forged actor id are rejected; the actor comes from the server-side session, even with synthetic logins (PRD-v0 T12) |
 | MN-012 | Matching does not require sensitive personal disclosures (struggles, recordings, contact lists, exact addresses, live location) | requirement | The profile schema has no such fields; meetup area is coarse (an area or district, not an address) |
+| MN-013 | The profile assistant never saves, publishes or changes consent by itself | requirement | Profile fields change only on a user's explicit accept or save action; the assistant's draft is not persisted as profile data until then |
+| MN-014 | The profile assistant never infers faith or sensitive attributes, and never invents facts | requirement | Eval cases whose free text mentions faith, health or family produce no faith or sensitive tag; every drafted tag traces to words in the user's text |
+| MN-015 | Raw free text is private to its author and never reaches the suggestion model | requirement | The raw text is not returned to any other user, is not in suggestion-model input, and is deleted once the user accepts or discards the draft |
+| MN-016 | Onboarding is never a gate for consent-based features | requirement | A participant who skips optional onboarding can still opt in to event reconnection or the directory, and onboarding never turns either consent on |
 
 #### Must cost
 
@@ -98,6 +107,7 @@ No application pattern is selected here; that belongs to `@system.arch`.
 | MC-003 | Suggestion latency | assumption | Proposed: p95 ≤ 15 s on the synthetic dataset, with a loading state shown; the value must be confirmed (OQ-01) |
 | MC-004 | Capstone model spend cap | assumption | A total and per-request spend ceiling and an rpm limit (`max_rpm`) are set before evals run; amounts are not yet given (OQ-01) |
 | MC-005 | A degraded mode keeps discovery usable | requirement | If the model call fails, times out or exceeds budget, filter-based discovery (MD-004) still works and the UI says suggestions are unavailable |
+| MC-006 | Bounded profile-assistant cost | assumption | One model call per user "summarise" action (proposed ≤ US$0.01 each), counted within the US$20 capstone total; if unavailable, the user enters fields by hand |
 
 #### Must prove
 
@@ -109,6 +119,7 @@ No application pattern is selected here; that belongs to `@system.arch`.
 | MP-004 | The end-to-end journey works | requirement | A scripted end-to-end test: admin approves event → attendance confirmed → opt in → AI suggestion → request → accept → mutual contact share → follow-up report → join circle |
 | MP-005 | Funnel metrics are computed correctly | requirement | A metrics output on the seed data that matches hand-computed counts per unit, labelled synthetic |
 | MP-006 | The MVP does not demonstrate market demand | assumption | Docs and UI label the data synthetic; the MRD keeps H1–H5 as unvalidated hypotheses |
+| MP-007 | The profile assistant is faithful and safe | requirement | An eval on labelled synthetic free-text samples: 100% of drafted tags trace to the source text; 0 faith or sensitive tags inferred (MN-014); field agreement with hand labels at or above a threshold set before the run |
 
 ### 4. Functional Requirements
 
@@ -135,6 +146,9 @@ No application pattern is selected here; that belongs to `@system.arch`.
 | FR-019 | Follow-up self-report for accepted pairs | Should | MD-015 |
 | FR-020 | Funnel metrics view in separate units, labelled synthetic | Should | MD-016, MP-005 |
 | FR-021 | Synthetic seed dataset and synthetic login (choose a persona to act as) | Must | MD-017, MN-008 |
+| FR-022 | Short onboarding flow ending with the directory-consent choice | Must | MD-018, MN-016 |
+| FR-023 | AI profile assistant: free text → drafted tags and one-line summary → user edits, accepts or discards | Must | MD-019, MN-013, MN-014, MN-015, MC-006, MP-007 |
+| FR-024 | Per-field visibility setting (shown on profile / matching only) | Must | MD-020, MD-021 |
 
 ### 5. Non-Functional Requirements
 
@@ -184,6 +198,11 @@ No application pattern is selected here; that belongs to `@system.arch`.
 - **AC-013** Given an accepted pair submits the same follow-up report twice, then metrics count the pair once and keep "no report" separate from "reported no catch-up". (MD-015, MD-016)
 - **AC-014** The scripted end-to-end journey in MP-004 passes on the seed dataset. (MP-004)
 - **AC-015** The AI eval in MP-003 meets its thresholds before release. (MP-003)
+- **AC-016** Given a new participant, when they complete onboarding, then they reach a saved profile in ≤ 4 screens, can skip every optional step, and finish with directory consent off unless they turn it on. (MD-018, MN-016)
+- **AC-017** Given free text, when the user presses "summarise", then a draft of tags and a summary appears and nothing is saved; when they accept, only the accepted fields are saved and the raw text is deleted. (MD-019, MN-013, MN-015)
+- **AC-018** Given free text that mentions faith, health or family, when the assistant drafts fields, then no faith or sensitive tag appears in the draft. (MN-014)
+- **AC-019** Given a field set to *matching only*, when another participant views the profile or calls the profile API, then the field is absent; and suggestion-model input contains only MD-021 fields. (MD-020, MD-021)
+- **AC-020** Given participant P's *matching only* fields, when the admin views P, then the fields are shown and a view-log entry is written; when facilitator F views P and P is a member of or applicant to F's circle, then the same applies; when F views a non-member, or any organiser views P, then the fields are absent. (MD-022)
 
 ### 9. Out of Scope / Future Work
 
@@ -216,7 +235,10 @@ No application pattern is selected here; that belongs to `@system.arch`.
 
 - **OQ-01** Model spend: the total capstone budget, the per-request ceiling, and the target latency (MC-003, MC-004).
 - **OQ-02** AI eval: how the relevance gold set is built and labelled, and the pass threshold (MP-003). Set before the first run.
-- **OQ-03** Matching signals: which profile fields the AI may use and how they are weighted. "Same industry" is not required (PRD-v0 P02).
+- ~~**OQ-03** Matching signals.~~ Resolved 2026-11-14: fields listed in MD-021. Weighting is left to the suggestion prompt and is measured by the MP-003 eval.
+- ~~**OQ-01** Model spend.~~ Resolved 2026-11-14: US$20 total for the capstone; ≤ US$0.05 per suggestion request. Latency target stays the proposed p95 ≤ 15 s.
+- ~~**OQ-02** Eval threshold.~~ Resolved 2026-11-14: ≥ 80% agreement with a hand-labelled set of synthetic profiles modelled on public patterns, never copied from real individuals.
+- ~~**OQ-11** Who sees *matching only* fields?~~ Resolved 2026-11-14: the suggestion model, the admin, and circle facilitators for their own members and applicants (MD-022). Organisers have no access.
 - **OQ-04** Circle creation rights, admission policy defaults, capacity, and facilitator powers.
 - **OQ-05** Can users see public events without logging in, and should events be public or invite-only (PRD-v0 E04)?
 - **OQ-06** Request expiry and retry policy, and what the sender sees after a decline (PRD-v0 T04, T05).
@@ -229,3 +251,5 @@ No application pattern is selected here; that belongs to `@system.arch`.
 
 - 2026-11-10 — persona: `product-mgr` — action: `*elicit-requirements` — output: `project-context/1.define/system-description.md` — runtime resolved: `crewai` (env `AAMAD_TARGET_RUNTIME`, matches `aamad.config.yml`) — mode: greenfield — no application pattern selected — Prompt Trace omitted: this is a Define-phase artifact, not a runtime output.
 - 2026-11-10 — persona: `product-mgr` — action: quality pass — clarified MD-006 wording; marked OQ-09 resolved.
+- 2026-11-14 — persona: `product-mgr` — action: `*elicit-requirements` (onboarding update) — added MD-018 to MD-021, MN-013 to MN-016, MC-006, MP-007, FR-022 to FR-024, AC-016 to AC-019; resolved OQ-01, OQ-02 and OQ-03; added OQ-11. Source: operator answers 2026-11-14.
+- 2026-11-14 — persona: `product-mgr` — action: `*elicit-requirements` (update) — OQ-11 resolved: added MD-022 and AC-020; clarified MD-020 and AC-019.

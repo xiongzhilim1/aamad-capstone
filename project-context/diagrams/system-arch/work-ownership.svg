@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="work-ownership-title work-ownership-desc" id="work-ownership-root">
+      <title id="work-ownership-title">Who owns each step: suggestions and profile assistant</title>
+      <desc id="work-ownership-desc">Humans make every consent and approval decision, app code enforces access rules and filters candidates, and the model owns only two drafting steps, ranking suggestions and turning a participant's free text into profile fields, both checked by code and reviewed by the participant.</desc>
+      <defs>
+      <style>#work-ownership-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #work-ownership-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #work-ownership-root .scroll { overflow-x: auto; }</style>
+        <pattern id="work-ownership-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="0.9" fill="#2d3142" fill-opacity="0.10"/>
+        </pattern>
+        <marker id="work-ownership-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        <marker id="work-ownership-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+        <marker id="work-ownership-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+      <rect width="100%" height="100%" fill="url(#work-ownership-dots)" opacity="0.55"/>
+
+      <!-- Zones -->
+      <rect x="24" y="64" width="176" height="392" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+      <rect x="84" y="68" width="56" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="112" y="77" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">HUMAN</text>
+
+      <rect x="232" y="64" width="480" height="392" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+      <rect x="428" y="68" width="88" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="472" y="77" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">APP CODE · RULES</text>
+
+      <rect x="776" y="64" width="200" height="392" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+      <rect x="848" y="68" width="56" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="876" y="77" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">MODEL</text>
+
+      <!-- Arrows (before nodes) -->
+      <!-- Participant -> Candidate filter -->
+      <line x1="184" y1="128" x2="264" y2="128" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#work-ownership-arrow)"/>
+      <!-- Candidate filter -> Model (headline path) -->
+      <line x1="424" y1="128" x2="808" y2="128" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#work-ownership-arrow)"/>
+      <!-- Model -> Grounding check -->
+      <path d="M 880,160 V 256 Q 880,264 872,264 H 680" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#work-ownership-arrow)"/>
+      <!-- Candidate filter -> Access rules (vertical, drawn uninterrupted) -->
+      <line x1="344" y1="160" x2="344" y2="368" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#work-ownership-arrow)"/>
+      <!-- Grounding check -> Participant (dashed return, bridges the vertical at x=344) -->
+      <path d="M 520,264 H 352 a 8,8 0 0,0 -16,0 H 120 Q 112,264 112,256 V 160" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#work-ownership-arrow)"/>
+      <!-- Participant -> Profile assistant (hops the vertical at x=344) -->
+      <path d="M 80,160 V 336 Q 80,344 88,344 H 336 a 8,8 0 0,1 16,0 H 872 Q 880,344 880,352 V 368" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#work-ownership-arrow)"/>
+      <!-- Admin -> Access rules -->
+      <line x1="184" y1="400" x2="264" y2="400" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#work-ownership-arrow)"/>
+      <!-- Access rules -> Database -->
+      <line x1="424" y1="400" x2="520" y2="400" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#work-ownership-arrow)"/>
+
+      <!-- Arrow labels -->
+      <rect x="196" y="110" width="56" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="224" y="119" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SUGGEST</text>
+
+      <rect x="568" y="110" width="96" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="616" y="119" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">≤50 MINIMISED</text>
+
+      <rect x="784" y="200" width="88" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="828" y="209" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">RANK + REASONS</text>
+
+      <rect x="354" y="196" width="76" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="392" y="205" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ELIGIBILITY</text>
+
+      <rect x="400" y="244" width="84" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="442" y="253" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CHECKED LIST</text>
+
+      <rect x="692" y="326" width="64" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="724" y="335" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">FREE TEXT</text>
+
+      <rect x="196" y="382" width="56" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="224" y="391" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">APPROVE</text>
+
+      <rect x="452" y="382" width="40" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="472" y="391" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">R/W</text>
+
+      <!-- Node: Participant (human) -->
+      <rect x="40" y="96" width="144" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="40" y="96" width="144" height="64" rx="6" fill="#4f5d75" stroke="#5a6580" stroke-width="1" fill-opacity="0.10"/>
+      <rect x="48" y="104" width="40" height="12" rx="2" fill="none" stroke="#5a6580" stroke-width="0.8" stroke-opacity="0.40"/>
+      <text x="68" y="113" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">HUMAN</text>
+      <text x="112" y="132" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Participant</text>
+      <text x="112" y="148" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">consents · decides</text>
+
+      <!-- Node: Admin (human) -->
+      <rect x="40" y="368" width="144" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="40" y="368" width="144" height="64" rx="6" fill="#4f5d75" stroke="#5a6580" stroke-width="1" fill-opacity="0.10"/>
+      <rect x="48" y="376" width="40" height="12" rx="2" fill="none" stroke="#5a6580" stroke-width="0.8" stroke-opacity="0.40"/>
+      <text x="68" y="385" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">HUMAN</text>
+      <text x="112" y="404" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Admin</text>
+      <text x="112" y="420" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">W14 event gate</text>
+
+      <!-- Node: Candidate filter (code) -->
+      <rect x="264" y="96" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="264" y="96" width="160" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="272" y="104" width="32" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+      <text x="288" y="113" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CODE</text>
+      <text x="344" y="132" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Candidate filter</text>
+      <text x="344" y="148" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">W06 · opted-in only</text>
+
+      <!-- Node: Grounding check (code) -->
+      <rect x="520" y="232" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="520" y="232" width="160" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="528" y="240" width="32" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+      <text x="544" y="249" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CODE</text>
+      <text x="600" y="268" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Grounding check</text>
+      <text x="600" y="284" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">W08 · drop ungrounded</text>
+
+      <!-- Node: Access rules (code) -->
+      <rect x="264" y="368" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="264" y="368" width="160" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="272" y="376" width="32" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+      <text x="288" y="385" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CODE</text>
+      <text x="344" y="404" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Access rules</text>
+      <text x="344" y="420" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">W04 · W15 · consent</text>
+
+      <!-- Node: Database (store) -->
+      <rect x="520" y="368" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="520" y="368" width="160" height="64" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+      <rect x="528" y="376" width="24" height="12" rx="2" fill="none" stroke="#4f5d75" stroke-width="0.8" stroke-opacity="0.50"/>
+      <text x="540" y="385" fill="#4f5d75" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DB</text>
+      <text x="600" y="404" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Database</text>
+      <text x="600" y="420" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">live records</text>
+
+      <!-- Node: Suggestion model (focal) -->
+      <rect x="808" y="96" width="144" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="808" y="96" width="144" height="64" rx="6" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+      <rect x="816" y="104" width="40" height="12" rx="2" fill="none" stroke="#bf4520" stroke-width="0.8" stroke-opacity="0.50"/>
+      <text x="836" y="113" fill="#bf4520" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">MODEL</text>
+      <text x="880" y="132" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Suggestion model</text>
+      <text x="880" y="148" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">W07 · rank + reasons</text>
+
+      <!-- Node: Profile assistant (focal) -->
+      <rect x="808" y="368" width="144" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="808" y="368" width="144" height="64" rx="6" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+      <rect x="816" y="376" width="40" height="12" rx="2" fill="none" stroke="#bf4520" stroke-width="0.8" stroke-opacity="0.50"/>
+      <text x="836" y="385" fill="#bf4520" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">MODEL</text>
+      <text x="880" y="404" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Profile assistant</text>
+      <text x="880" y="420" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">W21 · user accepts</text>
+
+      <!-- Callout -->
+      <text x="792" y="300" fill="#4f5d75" font-size="13" font-style="italic" font-family="'Instrument Serif', serif">Drafts only.</text>
+      <text x="792" y="318" fill="#4f5d75" font-size="13" font-style="italic" font-family="'Instrument Serif', serif">No write path.</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="476" x2="960" y2="476" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>
+      <text x="40" y="492" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <rect x="40" y="508" width="14" height="10" rx="2" fill="#4f5d75" stroke="#5a6580" stroke-width="1" fill-opacity="0.10"/>
+      <text x="60" y="516" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Human decision</text>
+
+      <rect x="168" y="508" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="188" y="516" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Deterministic code</text>
+
+      <rect x="304" y="508" width="14" height="10" rx="2" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+      <text x="324" y="516" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Store</text>
+
+      <rect x="384" y="508" width="14" height="10" rx="2" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+      <text x="404" y="516" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Model drafts, human reviews</text>
+
+
+      <line x1="688" y1="514" x2="716" y2="514" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#work-ownership-arrow)"/>
+      <text x="724" y="516" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Call / write</text>
+
+      <line x1="808" y1="514" x2="836" y2="514" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#work-ownership-arrow)"/>
+      <text x="844" y="516" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Return to user</text>
+    </svg>
