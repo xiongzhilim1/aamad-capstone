@@ -99,7 +99,7 @@ If the shell has a project-root virtualenv active, `unset VIRTUAL_ENV` before `u
 | `docker compose up -d db` | passed: Postgres 16.16, healthy on :5432 |
 | `docker build backend` and `GET /healthz` from the container | passed: `{"status":"ok"}` |
 | `docker compose up backend` (full stack) | **not tested**: needs `backend/.env` |
-| CI workflow on GitHub | First run (43716537343): backend passed; frontend failed at `tsc` (`LayoutProps` not found: route types are generated into `.next/`). Fixed by adding `npx next typegen` before `tsc`; re-run result below |
+| CI workflow on GitHub | First run (43716537343): backend passed; frontend failed at `tsc` (`LayoutProps` not found: route types are generated into `.next/`). Fixed by adding `npx next typegen` before `tsc`. Re-run 43717428493 on `afe9a83`: **backend passed, frontend passed** |
 
 ## 8. Spec drift for `@system.arch` (reported, not patched)
 
