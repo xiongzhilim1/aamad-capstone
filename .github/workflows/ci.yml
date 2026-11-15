@@ -1,0 +1,55 @@
+# CI skeleton (SAD §5): lint, type-check, test, build. No deploy step.
+# Evals are a separate, manually triggered job added by @qa.eng (they spend model budget).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: peers
+          POSTGRES_PASSWORD: peers
+          POSTGRES_DB: peers
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U peers" --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://peers:peers@localhost:5432/peers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.7"
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy app
+      - run: uv run pytest -q
+      - run: docker build -t peers-backend:ci .
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run build
