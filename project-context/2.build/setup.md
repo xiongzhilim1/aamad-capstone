@@ -78,7 +78,7 @@ cd frontend && npm run dev                     # http://localhost:3000, /api →
 
 # checks
 cd backend && uv run ruff check . && uv run mypy app && uv run pytest -q
-cd frontend && npm run lint && npx tsc --noEmit && npm run build
+cd frontend && npm run lint && npx next typegen && npx tsc --noEmit && npm run build
 ```
 
 If the shell has a project-root virtualenv active, `unset VIRTUAL_ENV` before `uv run` in `backend/` (uv otherwise warns and uses `backend/.venv` anyway).
@@ -99,7 +99,7 @@ If the shell has a project-root virtualenv active, `unset VIRTUAL_ENV` before `u
 | `docker compose up -d db` | passed: Postgres 16.16, healthy on :5432 |
 | `docker build backend` and `GET /healthz` from the container | passed: `{"status":"ok"}` |
 | `docker compose up backend` (full stack) | **not tested**: needs `backend/.env` |
-| CI workflow on GitHub | **not tested** until pushed |
+| CI workflow on GitHub | First run (43716537343): backend passed; frontend failed at `tsc` (`LayoutProps` not found: route types are generated into `.next/`). Fixed by adding `npx next typegen` before `tsc`; re-run result below |
 
 ## 8. Spec drift for `@system.arch` (reported, not patched)
 
@@ -129,3 +129,4 @@ If the shell has a project-root virtualenv active, `unset VIRTUAL_ENV` before `u
 - 2026-11-15 — persona: `project-mgr` — actions: `*setup-project`, `*install-dependencies`, `*configure-env`, `*document-setup` — runtime resolved: `crewai` (env `AAMAD_TARGET_RUNTIME`, matches `aamad.config.yml`) — no model calls made; no secrets written.
 - 2026-11-15 — persona: `project-mgr` — action: `sync-docs` — Doc sync: no descriptive updates (setup.md is the only allowlisted doc and was written in this change set; the root README describes the AAMAD framework, not the app). Spec drift is reported in §8 for `@system.arch`.
 - 2026-11-15 — persona: `project-mgr` — action: `*document-setup` (update) — Docker verified: compose db healthy; backend image builds and serves /healthz.
+- 2026-11-15 — persona: `project-mgr` — action: CI fix — added `next typegen` before `tsc` in CI and in the local check command.
