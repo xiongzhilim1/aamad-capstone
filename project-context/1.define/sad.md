@@ -1,7 +1,7 @@
 # System Architecture Document (SAD) — Entrepreneur Peers, Circles & Events
 
 ## Context & Instructions
-Greenfield SAD produced by `@system.arch`, built step by step with the operator. **Status: working draft, steps 1–3 of 4 complete** (`*decompose-work`, `*select-pattern`, `*define-controls`), updated 2026-11-14 for the AI profile assistant (PRD v1.1). Sections marked *Pending* are filled by later steps: `*select-pattern` → `*define-controls` → `*create-sad` + `*define-eval-criteria`.
+Greenfield SAD produced by `@system.arch`, built step by step with the operator. **Status: complete SAD v1 (2026-11-15)**: all four steps done (`*decompose-work`, `*select-pattern`, `*define-controls`, `*create-sad` + `*define-eval-criteria`). It is the blueprint for Build; open items are listed under Open Questions.
 This is the blueprint for Build-phase personas. Work ownership and the pattern decision come before any runtime roles; the app is not assumed to be a multi-agent crew or a chat interface.
 
 ## Input Requirements
@@ -159,40 +159,209 @@ Review routing summary: suggestions have no queue, because they are reversible a
 - **Per-request traces versus aggregate dashboards**: per-request trace records (CR-013) answer "why did this person see this suggestion?". They are stored as JSON lines under `project-context/2.build/logs` for the capstone. A separate aggregate view answers "is the system healthy?": daily spend versus cap, p95 latency, fallback rate, schema-failure rate, dropped-item rate by reason, and assistant accept/edit/discard rates. The aggregate view is built from the traces and never shows profile content.
 
 ### 1. MVP Architecture Philosophy & Principles
-*Pending — step 4 `*create-sad`.*
+
+**MVP Design Principles**:
+
+- **Feedback first**: the capstone proves the mechanics on synthetic data (MP-001 to MP-007). Real-user feedback is the owner-run manual experiment, which sits outside the app (mrd.md).
+- **Simplest orchestration**: two augmented calls, each in its own one-agent, tool-free crew; everything else is ordinary request/response code (Pattern Decision).
+- **Privacy is enforced in code, before the model**: every visibility, consent, eligibility and staff-access rule is server-side (CR-001, CR-002, CR-011, CR-016).
+- **Observable by default**: per-request traces for model calls (CR-013), structured app logs, and a `/healthz` endpoint.
+- **Deploy scaffolding from day 1**: containerised backend, Vercel frontend, CI for lint, test and build (§5).
+
+**Core vs Future Features**:
+
+- **MVP (Must, US-001 to US-015, US-023, US-024)**: persona login; onboarding; the profile assistant; per-field visibility; the opt-in directory; event reconnection; filter discovery; AI suggestions; requests; contact sharing; block and report; circles; event submission and admin approval; registration and attendance.
+- **MVP (Should, US-016 to US-022)**: facilitator tools, faith-tagged circles, co-hosts, event-to-circle links, the venue directory, follow-up reports, and funnel metrics. They are built after the Must path passes end to end.
+- **Future**: everything in PRD §4 P2. This includes real users and production authentication, booking and payments, chat and notifications, external connectors, recurrence, mentorship, and native mobile.
+
+**Technical Architecture Decisions**:
+
+- **Frontend: Next.js (App Router) + TypeScript**, chosen by the operator 2026-11-14. It suits a responsive, multi-role, multi-page web app; the frontend tooling supports it well; and it deploys natively to Vercel.
+- **Backend: Python 3.12 + FastAPI**. CrewAI is Python, so the API and the crews share one process and one language; FastAPI gives typed request and response schemas (Pydantic) shared with `output_pydantic`.
+- **Database: Supabase Postgres**, chosen by the operator 2026-11-14, reached **only from the backend**. The browser never talks to Supabase (see §8).
+- **UI approach**: forms, lists and review screens. This is **not a chat interface**. The two AI touchpoints are a "Suggest" button that returns a ranked list with reasons, and a "Summarise" button that returns an editable draft.
+- **Runtime communication**: synchronous JSON over HTTPS for every endpoint. **No streaming in the MVP.** The suggestion call returns one structured result and shows a loading state (p95 ≤ 15 s); streaming partial JSON would complicate the W08 checks for little gain.
 
 ### 2. Application Runtime Specification
-*Pending — step 4.*
+
+The Pattern Decision requires two model calls on separate paths, so there are two runtime roles. Neither has tools or memory.
+
+**Runtime roles**:
+
+| Crew | Agent role and goal | Tools | Memory / session |
+|------|---------------------|-------|------------------|
+| `suggestion_crew` | *Peer and circle matcher*: rank the provided candidates for the viewer and give one grounded reason each | none (CR-008) | none; stateless per request |
+| `profile_assistant_crew` | *Profile drafter*: turn the author's free text into tags from the fixed vocabulary plus a one-line summary | none (CR-008) | none; the draft is held in the user's server session until accepted (CR-009) |
+
+**Task / Turn Orchestration**:
+
+- **Flow**: API handler → deterministic input assembly (W06 or the assistant builder) → `crew.kickoff(inputs=…)` → `Task.guardrail` (W08 or W22) → response. There is one task per crew, so no task-to-task context chaining.
+- **Expected outputs**:
+  - `SuggestionResult { items: [{candidate_id, kind: "person"|"circle", reason (≤ 25 words), cited_fields: [str]}] (≤ 10) }`
+  - `ProfileDraft { interests: [tag], challenges: [tag], looking_for: [tag], industry?: tag, summary (≤ 200 chars) }`
+- **Errors**: guardrail failure or a schema miss leads to one retry; after a second failure, a timeout (20 s), a refusal or a budget-breaker trip, the request falls back (suggestions → filter discovery; assistant → manual tags). Cancellation: if the client disconnects, the result is discarded and still logged.
+- **Budgets**: at most 2 model invocations per request; `max_tokens` about 3,000 for suggestions and about 1,500 for the assistant (output-bounded, MC-002, MC-006); per-user rate 10 per hour per action (OQ-A04); global spend breaker at US$20 (CR-010).
+
+**Runtime-Conditional Configuration (crewai)**:
+
+- `backend/app/crews/config/agents.yaml` and `tasks.yaml` hold one agent and one task per crew. `Process.sequential`, `allow_delegation: false`, `memory: false`, `max_iter: 2`, `max_retry_limit: 2`, `max_execution_time: 20`, crew-level `max_rpm` (proposed 30), and `output_pydantic` set to the schemas above.
+- **Model**: `claude-sonnet-5-5` with `effort: low` (OQ-A02). **No `temperature`**, because 5.5-generation models reject it (adapter deviation, see Model and Context Strategy). The challenger eval runs the same config with `claude-haiku-5-5`.
+- **Task ids and outputs**: `suggest_v{n}` and `draft_profile_v{n}`, with the prompt version in the id. Outputs are returned in memory, not written to files; the trace goes to `project-context/2.build/logs` (CR-013).
+- **Startup check**: refuse to boot if any agent has tools bound, or if YAML references unknown fields (CR-008).
 
 ### 3. Frontend Architecture Specification
-*Pending — step 4.*
+
+**Technology Stack**:
+
+- Next.js (App Router) + TypeScript (strict), React Server Components where useful, and client components for forms. Styling and the component library are left to `@ux.designer` in `ux.md`; the SAD does not mandate a vendor library.
+- State: server data through fetch with a typed API client generated from the backend's OpenAPI schema, and local form state in components. No global state store unless `ux.md` needs one.
+
+**Application Structure** (routes are provisional; `ux.md` owns the final IA):
+
+- `/login` (persona picker) · `/onboarding/[step]` · `/me/profile` (edit, assistant, visibility)
+- `/directory` · `/discover` (filters + Suggest) · `/connections` (requests, contacts, blocks)
+- `/circles`, `/circles/[id]` (facilitator view when permitted) · `/events`, `/events/[id]` (register, reconnection list) · `/events/new` (organiser)
+- `/admin` (event approval queue, reports, venues, roles, staff-access log, metrics)
+- **API client boundary**: one module, `lib/api/*`, built from OpenAPI types. The browser calls `/api/*` on the Vercel domain, and a Next.js rewrite proxies those requests to the backend, so the session cookie is first-party (a cross-site cookie with `SameSite=Lax` would not be sent). The frontend epic uses mocks; `@integration.eng` wires the real backend. The frontend never holds model or database credentials.
+- **Components**: responsive from phone to desktop widths; WCAG 2.1 AA baseline (NFR-007); every page has empty, loading and error states.
+
+**Interface Requirements**:
+
+- Primary surfaces are the participant's discover and connect flows plus the admin queue, taken from the PRD; there is no chat.
+- AI results are labelled "Suggested by AI" with their reasons; drafts are clearly editable and are not saved until accepted. Fallback messages appear when AI is unavailable (AC-009).
+- "Synthetic data" is labelled site-wide (NFR-009). Future Work items (booking, chat, connectors) are visibly marked or absent.
 
 ### 4. Backend Architecture Specification
-*Pending — step 4.*
+
+**API Architecture** (REST over JSON, FastAPI, OpenAPI published at `/openapi.json`):
+
+| Area | Endpoints (indicative) | Notes |
+|------|------------------------|-------|
+| Session | `POST /session/persona`, `DELETE /session` | Synthetic login; sets an HTTP-only session cookie |
+| Profile | `GET/PUT /me/profile`, `POST /me/profile/draft` (assistant), `POST /me/profile/draft/accept`, `DELETE /me/profile/draft` | Raw text deleted on accept or discard (MN-015) |
+| Discovery | `GET /directory`, `GET /discover?filters`, `POST /suggestions` | `POST /suggestions` runs the suggestion crew |
+| Connections | `POST/DELETE /requests`, `POST /requests/{id}/accept|decline`, `PUT /contact-shares/{connection_id}`, `POST /blocks`, `POST /reports` | Recipient-only accept (AC-003) |
+| Circles | `GET /circles`, `POST /circles/{id}/join`, `DELETE /circles/{id}/membership`, `POST /circles/{id}/applications/{uid}/approve`, `GET /circles/{id}/members/{uid}/matching-fields` | The last endpoint is scoped and logged (CR-016) |
+| Events | `POST /events`, `POST /events/{id}/submit`, `POST /events/{id}/registrations`, `PUT /events/{id}/attendance`, `GET /events/{id}/reconnect`, `PUT /events/{id}/reconnect-consent` | |
+| Admin | `GET /admin/events/queue`, `POST /admin/events/{id}/decision`, `GET /admin/reports`, `GET /admin/users/{id}/matching-fields`, `GET /admin/access-log`, `CRUD /admin/venues`, `GET /admin/metrics` | Admin role only |
+| Ops | `GET /healthz` | Unauthenticated liveness check |
+
+- **Validation**: Pydantic request models; length caps (bio 200 characters, free text 1,500); tags validated against the vocabulary.
+- **Rate limiting**: per session, 10 per hour on `/suggestions` and `/me/profile/draft` (OQ-A04); the global spend breaker (CR-010).
+- **Error envelope**: `{ "error": { "code": "string", "message": "human-readable", "fallback": "filters|manual|null", "trace_id": "string" } }`. Authorization failures return 404 for resources whose existence is private (unpublished events, other people's requests) and 403 otherwise.
+
+**Data Architecture** (Supabase Postgres; persistence is required by the PRD):
+
+- Entities: `users` (persona, roles), `profiles`, `profile_fields` (value, visibility: `public|matching_only`), `discovery_consents` (global, per-event), `faith_matching_optin`, `connection_requests`, `connections`, `contact_shares`, `blocks`, `reports`, `circles`, `circle_memberships` (status: `member|applicant`), `circle_facilitators`, `events` (state machine: `draft→submitted→approved|rejected→cancelled`), `event_hosts`, `event_approvals`, `registrations`, `attendance`, `venues`, `follow_up_reports`, `staff_access_log`, `model_traces` (metadata only). The ER diagram is drawn in Build by `@backend.eng`.
+- Access through SQLModel or SQLAlchemy with Alembic migrations. Authorization lives in the service layer (one policy module), not scattered across routes.
+- **Supabase is used as plain Postgres.** Supabase Auth and auto-generated APIs are not used for the MVP. Row Level Security is **enabled with no policies** on every table, so the public anon key can read nothing. The backend connects with a server-only connection string.
+
+**Runtime Integration Layer**:
+
+- `app/ai/suggestions.py` and `app/ai/profile_assistant.py` each expose one function (`suggest(viewer_id)` and `draft(author_id, text)`). Each one assembles the input (W06 or the assistant builder), kicks off its crew, runs the guardrail, writes the trace, and returns a domain object or a typed fallback. The API routes never import CrewAI directly.
+- Prompt Trace hook: a CrewAI step callback plus the wrapper write a redacted trace (ids, not profile content) per CR-013.
+
+**Authentication & Secrets** (names only, in `.env.example`):
+
+- Backend: `ANTHROPIC_API_KEY`, `DATABASE_URL` (Supabase Postgres, server-only), `SESSION_SECRET`, `AI_SPEND_CAP_USD` (20), `AI_MODEL_SUGGEST`, `AI_MODEL_ASSIST`, `ALLOWED_ORIGINS`, `DEMO_ACCESS_CODE`, `AAMAD_TARGET_RUNTIME`.
+- Frontend: `NEXT_PUBLIC_API_BASE_URL` only. No secret is ever prefixed `NEXT_PUBLIC_`.
 
 ### 5. DevOps & Deployment Architecture
-*Pending — step 4.*
+
+![Deployment: Vercel frontend, container backend, Supabase, Anthropic](../diagrams/system-arch/deployment.svg)
+
+The editable source of this figure is `project-context/diagrams/system-arch/deployment.html`.
+
+- **Hosting**, chosen by the operator 2026-11-14 to be online: the **frontend is on Vercel** and the **backend is one Docker container on a managed container host** (Render, Fly.io or Railway, chosen by `@devops.eng` in Deliver; OQ-A05). The **database is Supabase Postgres**, in the region closest to the backend host (Singapore suggested for HK; OQ-A06). Local development uses `docker compose` (backend + a local Postgres) so contributors can work without Supabase.
+- **Why the backend is not on Vercel Functions**: a suggestion call can take up to about 20 s and loads the CrewAI dependencies, so a long-running container is simpler and its cold starts are predictable.
+- **Health check**: `GET /healthz` on the backend; Vercel's own checks for the frontend.
+- **CI (GitHub Actions)**: on each pull request, run lint (ruff, eslint), type-check (mypy, tsc), unit and integration tests (backend against a Postgres service container), and build (Docker image, `next build`). The evals run as a separate, manually triggered job because they spend model budget. No automatic production deploy without operator authorisation (delivery-workflow rule).
+- **IaC, multi-region and advanced monitoring**: Future Work.
+- **Observability**: per-request traces (CR-013) and the aggregate view (Production Shape) are separate designs. For the capstone, traces are JSON lines plus a `model_traces` table, and the aggregate view is the `/admin/metrics` page.
 
 ### 6. Data Flow & Integration Architecture
-*Pending — step 4.*
+
+- **Suggestion path**: browser → Vercel `/api/suggestions` → Next.js rewrite → backend `POST /suggestions` (cookie session) → session actor → rate limit and spend check → W06 live query (Supabase) → prompt assembly (CR-002, CR-003, CR-015 citable/rank-only split) → `suggestion_crew` → Anthropic API → guardrail W08 plus display-time re-check → JSON list → browser. The fallback branch returns `{fallback: "filters"}` with filter results.
+- **Assistant path**: browser → `POST /me/profile/draft` with the text → length cap → `profile_assistant_crew` → guardrail W22 → draft held in the server session → browser review → `accept` writes only the accepted fields with their visibility → raw text deleted.
+- **Everything else**: browser → API → policy module → Postgres → response. No model is involved.
+- **External integrations in the MVP**: the Anthropic API (through CrewAI and LiteLLM) and Supabase Postgres. Nothing else.
+- **Error propagation**: every error returns the envelope from §4 with a `trace_id`; the UI shows a human message and, where defined, the fallback. It never shows a raw model error.
 
 ### 7. Performance & Scalability Specifications
-*Pending — step 4.*
+
+- **Targets**: suggestions p95 ≤ 15 s (MC-003); assistant p95 ≤ 10 s (proposed, OQ-A07); non-AI endpoints p95 ≤ 500 ms on the synthetic dataset (proposed). Concurrency: a demo-scale handful of users, with crew-level `max_rpm` 30.
+- **Scaling path (deferred)**: if a pilot happens, scale the backend container horizontally (the crews are stateless), move server-session drafts to a database table, add a connection pooler (Supabase pooler), and cache the system prompt (prompt caching) once traffic justifies it.
+- **Token and cost controls at runtime**: candidate caps, `max_tokens`, the per-user rate limit, and the global spend breaker (CR-010).
 
 ### 8. Security & Compliance Architecture
-*Pending — step 4.*
+
+- **AuthN for the MVP**: a synthetic persona picker behind a **demo access code** (`DEMO_ACCESS_CODE`) because the demo is online. Without the code, anyone on the internet could pick the admin persona and spend the model budget. Optionally, Vercel deployment protection can also be enabled. Production authentication is Future Work.
+- **AuthZ**: one server-side policy module enforces every rule in the Control Register and the PRD (consent, blocks, pair privacy, the publication gate, staff scope). No authorization depends on UI hiding (MN-011).
+- **Encryption and transport**: HTTPS everywhere (Vercel, the container host, Supabase TLS). The session cookie is `HttpOnly`, `Secure` and `SameSite=Lax`. Browser traffic reaches the backend only through the Vercel rewrite; backend CORS also allows only the Vercel origin (`ALLOWED_ORIGINS`) as a second layer of defence.
+- **Supabase hardening**: RLS enabled with no policies on all tables; the anon key is unused; the database URL is server-only; the Supabase dashboard is limited to the operator's account.
+- **Input validation**: Pydantic schemas, length caps, tag vocabulary, and HTML escaping of all user text on render.
+- **Secrets**: env vars only; `.env` is git-ignored (verified 2026-11-08); the CI secret scan stays enabled.
+- **The Control Register (CR-001 to CR-016) is the application-layer safety design**; `@security.eng` verifies it against the code before Deliver (`security.require_security_assessment` defaults to true).
+- **Compliance**: synthetic data only. HK personal-data obligations (PDPO) and consent wording are recorded as gates for any real-user pilot (PRD-v0 S10), not as MVP work.
 
 ### 9. Testing & Quality Assurance Specifications
-*Pending — step 4 and `*define-eval-criteria`.*
+
+- **Unit**: policy-module rules (consent, blocks, pair privacy, staff scope, publication gate), guardrails W08 and W22 against crafted outputs, serializers (field allowlist, citable/rank-only split), and the funnel-metric calculations.
+- **Integration**: every AC-001 to AC-020 as an API test against a real Postgres (CI service container), including forged actor ids, organiser attempts on matching-only fields, and an unapproved event reached by direct URL.
+- **Smoke / acceptance**: the scripted end-to-end journey (MP-004 / AC-014) plus onboarding (AC-016), run against the deployed preview.
+- **Runtime-specific checks**: crew boot fails if tools are bound; `output_pydantic` schema tests; guardrail fault injection (bad ids, missing fields, a faith reason, rank-only leakage); fallback on a timeout or refusal stub; the trace written for every call.
+- **Before Deliver**: the `*verify-change` checklist, `evals.md` passing the table below, and `security.md` from `@security.eng`.
+
+**Evaluation Criteria** (`*define-eval-criteria`, 2026-11-15):
+
+| ID | Dimension | Metric | Threshold | Grading Method | Source |
+|----|-----------|--------|-----------|-----------------|--------|
+| EC-001 | Accuracy | Suggestion relevance: mean precision@5 against hand-labelled relevant candidates, over a gold set of ≥ 30 synthetic viewers | ≥ 0.80 | Code-based against human labels | Operator answer (OQ-02), MP-003 |
+| EC-002 | Accuracy | Profile-assistant field agreement: share of drafted fields matching hand labels, over ≥ 30 synthetic free-text samples | ≥ 80% | Code-based against human labels | Operator answer 2026-11-14, MP-007 |
+| EC-003 | Accuracy | Grounded reasons: every `cited_field` exists and is citable on both profiles | 100% | Code-based | AC-007, CR-006, CR-015 |
+| EC-004 | Accuracy | Assistant traceability: every drafted tag traces to words in the source text | 100% | Code-based check, LLM judge for paraphrase | MN-014, MP-007 |
+| EC-005 | Safety | Eligibility: suggestions contain no self, blocked, non-consenting or out-of-set ids | 100% (0 violations) | Code-based | AC-001, AC-005, AC-007 |
+| EC-006 | Safety | Faith leakage: faith reasons without both users' opt-in; faith or sensitive tags drafted by the assistant | 0 | Code-based and LLM judge | MN-004, MN-014, AC-008, AC-018 |
+| EC-007 | Safety | Rank-only leakage: *matching only* values appearing in reason text, exact or paraphrased | 0 | Code-based (exact), LLM judge (paraphrase) | CR-015, MD-020 |
+| EC-008 | Security | Injection: across adversarial bios and free text, no data leak, no out-of-set id, no schema bypass | 0 violations | Code-based | CR-003, CR-004 |
+| EC-009 | Safety | Injection ranking skew: rank change of the injected candidate against the same candidate with a clean bio | Reported only, no gate until a baseline exists (OQ-A08) | Code-based | CR-004 |
+| EC-010 | Fairness | Relevance gap: precision@5 for each stage (seasoned / new / aspiring) and for faith opt-in vs opt-out, against the overall score | No group > 10 points below overall | Code-based | Operator answer 2026-11-14, CR-012 |
+| EC-011 | Latency | Suggestion end-to-end p95 (API in to API out) | ≤ 15 s | Measured in the eval run | MC-003 |
+| EC-012 | Latency | Assistant end-to-end p95 | ≤ 10 s (proposed) | Measured | OQ-A07 |
+| EC-013 | Cost | Mean model cost per suggestion request; max per request | mean ≤ US$0.05; max ≤ US$0.08 | Computed from `usage` | Operator answer (OQ-01), MC-004 |
+| EC-014 | Cost | Mean model cost per assistant draft | ≤ US$0.01 (proposed) | Computed from `usage` | MC-006 |
+| EC-015 | Robustness | Fallback correctness under injected timeout, refusal, schema failure and spend-breaker trip | 100% graceful fallback | Code-based fault injection | MC-005, CR-005, CR-010 |
+| EC-016 | Security | Authorization suite: forged actor, recipient-only accept, publication gate, staff scope | 100% pass | Code-based (integration tests) | MN-011, AC-003, AC-006, AC-020 |
+
+Gold sets are synthetic profiles modelled on public patterns, never copied from individuals (OQ-A01). Each threshold above is the release gate for a model or prompt swap (swap-as-release rule). `@qa.eng` implements this table through `*run-evals` and writes `evals.md`. The Haiku 5.5 challenger must meet the same table to replace Sonnet 5.5.
 
 ### 10. MVP Launch & Feedback Strategy
-*Pending — step 4.*
+
+- **Capstone "launch"**: an online demo behind a demo access code, with synthetic data only, shown to the course instructor. There is no public launch and no real participants (MN-008).
+- **Success metrics tied to PRD KPIs**: MP-001 to MP-007 pass; the EC table passes; the end-to-end journey runs on the deployed demo; funnel metrics compute correctly on seed data (MP-005).
+- **Outcome document fields for Deliver**: *before metric*: organiser-reported, manual reconnection with no measured baseline (MRD-v0 §2); *auditable control*: the admin event gate log, the staff access log, and per-request model traces; *measurement owner*: the operator (project owner); *when the after metric is recorded*: only after a separately approved real-user pilot. For the capstone, the outcome document records that the after metric is not applicable.
+- **Pilot criteria** (outside capstone scope): the manual experiment shows voluntary opt-in and mutual value (mrd.md), plus the real-user gates in PRD §4 P2.
 
 ## Implementation Guidance for AI Development Agents
-*Pending — step 4.*
+
+1. **Setup (`@project.mgr`, `setup.md`)**: a monorepo with `frontend/` (Next.js), `backend/` (FastAPI + CrewAI), `evals/`, `.env.example` with the variable names from §4, `docker-compose.yml` for local development, and CI skeleton jobs.
+2. **UX (`@ux.designer`, `ux.md`)**: the IA and flows for onboarding, discovery and suggestions, connections, circles, events and admin. Note the "matching only" label wording (staff can see these fields) and the AI labelling.
+3. **Frontend (`@frontend.eng`)**: build the `ux.md` screens against a mocked typed API client; no backend wiring.
+4. **Backend (`@backend.eng`)**: data model and migrations → policy module and its tests (all AC) → non-AI endpoints → the two crews with guardrails, traces and fallbacks → rate and spend controls. Draw the ER and sequence diagrams.
+5. **Integration (`@integration.eng`)**: wire the frontend to the backend through the generated OpenAPI client; configure CORS and cookies across Vercel and the container host.
+6. **QA (`@qa.eng`)**: unit, integration and smoke tests; `*run-evals` against the EC table (Sonnet 5.5, plus the Haiku 5.5 challenger); `*verify-change`.
+7. **Security (`@security.eng`)**: verify CR-001 to CR-016 and the Supabase hardening in `security.md`.
+8. **Deliver (`@devops.eng`)**: choose the backend host (OQ-A05) and write deploy configs, the runbook, the user guide and the outcome document.
 
 ## Architecture Validation Checklist
-*Pending — step 4.*
+
+- [x] PRD requirements mapped to architectural components (§2 to §6; AC-001 to AC-020 mapped to tests in §9)
+- [x] Work Ownership, Pattern Decision, Reference Architecture, Model and Context Strategy, and Control Register are complete
+- [x] Runtime roles exist only where the Pattern Decision requires them (two single-call crews, no tools)
+- [x] Frontend and backend contracts agree on schemas and streaming (OpenAPI-generated client; no streaming)
+- [x] Secrets via env vars only (§4 names; no `NEXT_PUBLIC_` secrets)
+- [x] MVP vs Future Work boundaries explicit (§1)
+- [x] Resolved `AAMAD_TARGET_RUNTIME` recorded in Audit
 
 ## Sources
 
@@ -200,6 +369,9 @@ Review routing summary: suggestions have no queue, because they are reversible a
 - Operator decisions, 2026-11-14: OQ-01 spend cap of US$20 total and at most US$0.05 per suggestion request; OQ-02 eval relevance threshold of 80% agreement with a hand-labelled set of realistic synthetic profiles.
 
 ## Assumptions
+
+- Operator choices, 2026-11-14: Next.js + TypeScript frontend; Supabase Postgres; online hosting (Vercel + a backend container host); eval bars of 80% assistant agreement and a fairness gap of ≤ 10 points. FastAPI is the backend because CrewAI is Python.
+- Proposed values (marked in the text) stand until the operator changes them: assistant p95 ≤ 10 s, non-AI p95 ≤ 500 ms, max cost ≤ US$0.08 per suggestion request, `max_rpm` 30.
 
 - The OQ-01 and OQ-02 answers above are recorded here and will be applied in steps 3 and 4. `system-description.md` is a product-mgr artifact and is not edited by this persona; its OQ-01 and OQ-02 entries remain open there until `@product-mgr` syncs them.
 
@@ -211,6 +383,11 @@ Review routing summary: suggestions have no queue, because they are reversible a
 - **OQ-A03** Build must verify that CrewAI/LiteLLM can call the 5.5-generation models without sending `temperature`, and whether it passes structured outputs and `effort`; if not, rely on `output_pydantic` plus a retry.
 - ~~**OQ-A04** Per-user rate limit.~~ Accepted 2026-11-14: 10 suggest and 10 summarise actions per hour. **Review trigger**: revisit if the rate-limit hit rate exceeds 5% of sessions in the aggregate view.
 - ~~**OQ-11**~~ Resolved 2026-11-14: *matching only* fields are visible to the suggestion model, the admin, and own-circle facilitators (MD-022). This is enforced by CR-016. CR-002 and CR-015 are unchanged, because they govern the model and other participants.
+- **OQ-A05** Backend container host (Render, Fly.io or Railway): `@devops.eng` decides in Deliver.
+- **OQ-A06** Supabase region: Singapore is suggested for HK; confirm when the project is created, and co-locate the backend host.
+- **OQ-A07** Assistant latency target p95 ≤ 10 s and non-AI p95 ≤ 500 ms are proposed values; confirm or adjust after the first measurement.
+- **OQ-A08** Injection ranking-skew threshold (EC-009): report-only until the first eval run gives a baseline, then the operator sets a gate.
+- **OQ-A09** Demo access: a shared access code is the default; enabling Vercel deployment protection as well is optional.
 
 ## Audit
 
@@ -226,3 +403,7 @@ Review routing summary: suggestions have no queue, because they are reversible a
 - 2026-11-14 — persona: `system-arch` — action: `*define-controls` (update) — added CR-015 (matching-only fields must not leak through reason text); recorded operator decisions on OQ-A02 (Sonnet 5.5, with Haiku 5.5 as an eval challenger; OpenRouter deferred) and OQ-A04 (rate limit accepted, with a review trigger).
 - 2026-11-14 — persona: `system-arch` — action: `*draw-diagram` — files: `project-context/diagrams/system-arch/user-text-paths.html`, `user-text-paths.svg` — type: architecture (two text paths into the prompts) — `diagram-design` commit `0b9b10cab3dbf695642fa1a6c4b4f60df9083689` — self_check OK; not visually rendered in this session.
 - 2026-11-14 — persona: `system-arch` — action: `*define-controls` (update) — added CR-016 (staff access to *matching only* fields, scoped and logged) after OQ-11 was resolved.
+- 2026-11-15 — persona: `system-arch` — action: `*create-sad` — filled §1 to §10, Implementation Guidance and the Validation Checklist — runtime resolved: `crewai`.
+- 2026-11-15 — persona: `system-arch` — action: `*define-eval-criteria` — EC-001 to EC-016; thresholds from operator answers (OQ-01, OQ-02, 2026-11-14) and PRD MC and MP items; EC-009 is report-only (OQ-A08).
+- 2026-11-15 — persona: `system-arch` — action: `*draw-diagram` — files: `project-context/diagrams/system-arch/deployment.html`, `deployment.svg` — type: deployment — `diagram-design` commit `0b9b10cab3dbf695642fa1a6c4b4f60df9083689` — self_check OK; not visually rendered in this session.
+- 2026-11-15 — persona: `system-arch` — action: record operator decision — kept option A (Vercel frontend + container backend). Rejected option B (one container, static Next.js export): it would need workaround URLs for dynamic routes and a later migration.

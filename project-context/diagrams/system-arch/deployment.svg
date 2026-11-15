@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="deployment-title deployment-desc" id="deployment-root">
+      <title id="deployment-title">Where the online capstone demo runs</title>
+      <desc id="deployment-desc">The browser reaches a Next.js frontend on Vercel, which proxies API calls to a single FastAPI and CrewAI backend container, which in turn connects to Supabase Postgres and the Anthropic API.</desc>
+      <defs>
+      <style>#deployment-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #deployment-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #deployment-root .scroll { overflow-x: auto; }</style>
+        <pattern id="deployment-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="0.9" fill="#2d3142" fill-opacity="0.10"/>
+        </pattern>
+        <marker id="deployment-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        <marker id="deployment-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+      <rect width="100%" height="100%" fill="url(#deployment-dots)" opacity="0.55"/>
+
+      <!-- Zones -->
+      <rect x="200" y="96" width="192" height="272" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" stroke-dasharray="4,4" fill-opacity="0.02" stroke-opacity="0.20"/>
+      <rect x="208" y="90" width="52" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="212" y="99" fill="#5a6580" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">VERCEL</text>
+
+      <rect x="424" y="96" width="232" height="272" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" stroke-dasharray="4,4" fill-opacity="0.02" stroke-opacity="0.20"/>
+      <rect x="432" y="90" width="148" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="436" y="99" fill="#5a6580" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">CONTAINER HOST · TBD</text>
+
+      <rect x="688" y="96" width="288" height="272" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" stroke-dasharray="4,4" fill-opacity="0.02" stroke-opacity="0.20"/>
+      <rect x="696" y="90" width="124" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="700" y="99" fill="#5a6580" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">MANAGED SERVICES</text>
+
+      <!-- Network paths -->
+      <line x1="152" y1="240" x2="216" y2="240" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#deployment-arrow-link)"/>
+      <line x1="376" y1="240" x2="440" y2="240" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#deployment-arrow-link)"/>
+      <line x1="640" y1="168" x2="704" y2="168" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#deployment-arrow-link)"/>
+      <line x1="640" y1="312" x2="704" y2="312" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#deployment-arrow-link)"/>
+
+      <!-- Path labels -->
+      <rect x="156" y="222" width="56" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="184" y="231" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">HTTPS:443</text>
+      <rect x="380" y="222" width="56" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="408" y="231" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">/API PROXY</text>
+      <rect x="644" y="150" width="56" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="672" y="159" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">TLS:5432</text>
+      <rect x="644" y="294" width="56" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="672" y="303" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">HTTPS:443</text>
+
+      <!-- Node: Browser -->
+      <rect x="24" y="208" width="128" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="24" y="208" width="128" height="64" rx="6" fill="#4f5d75" stroke="#5a6580" stroke-width="1" fill-opacity="0.10"/>
+      <rect x="32" y="216" width="32" height="12" rx="2" fill="none" stroke="#5a6580" stroke-width="0.8" stroke-opacity="0.40"/>
+      <text x="48" y="225" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">USER</text>
+      <text x="88" y="244" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Browser</text>
+      <text x="88" y="260" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">demo access code</text>
+
+      <!-- Node: Next.js on Vercel -->
+      <rect x="216" y="192" width="160" height="96" rx="6" fill="#f5f5f5"/>
+      <rect x="216" y="192" width="160" height="96" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="224" y="200" width="32" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+      <text x="240" y="209" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">EDGE</text>
+      <text x="296" y="232" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Next.js frontend</text>
+      <rect x="224" y="248" width="144" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+      <text x="232" y="264" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, sans-serif">web · TS</text>
+      <text x="360" y="264" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">v0.1</text>
+
+      <!-- Node: Backend container (focal) -->
+      <rect x="440" y="152" width="200" height="176" rx="6" fill="#f5f5f5"/>
+      <rect x="440" y="152" width="200" height="176" rx="6" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+      <rect x="448" y="160" width="64" height="12" rx="2" fill="none" stroke="#bf4520" stroke-width="0.8" stroke-opacity="0.50"/>
+      <text x="480" y="169" fill="#bf4520" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CONTAINER</text>
+      <rect x="604" y="160" width="28" height="12" rx="2" fill="#f5f5f5" stroke="#bf4520" stroke-width="0.8" stroke-opacity="0.50"/>
+      <text x="618" y="169" fill="#bf4520" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">x1</text>
+      <text x="540" y="196" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Backend service</text>
+      <rect x="448" y="216" width="184" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+      <text x="456" y="232" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, sans-serif">api · FastAPI</text>
+      <text x="624" y="232" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">v0.1</text>
+      <rect x="448" y="248" width="184" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+      <text x="456" y="264" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, sans-serif">2 crews · CrewAI</text>
+      <text x="624" y="264" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">0 tools</text>
+      <text x="540" y="300" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">/healthz · spend cap $20</text>
+
+      <!-- Node: Supabase -->
+      <rect x="704" y="128" width="256" height="80" rx="6" fill="#f5f5f5"/>
+      <rect x="704" y="128" width="256" height="80" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+      <rect x="712" y="136" width="52" height="12" rx="2" fill="none" stroke="#4f5d75" stroke-width="0.8" stroke-opacity="0.50"/>
+      <text x="738" y="145" fill="#4f5d75" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">MANAGED</text>
+      <text x="832" y="160" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Supabase Postgres</text>
+      <rect x="712" y="172" width="240" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+      <text x="720" y="188" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, sans-serif">app schema · Alembic</text>
+      <text x="944" y="188" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">RLS on, no anon</text>
+
+      <!-- Node: Anthropic API -->
+      <rect x="704" y="272" width="256" height="80" rx="6" fill="#f5f5f5"/>
+      <rect x="704" y="272" width="256" height="80" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+      <rect x="712" y="280" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.22"/>
+      <text x="726" y="289" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+      <text x="832" y="304" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Anthropic API</text>
+      <rect x="712" y="316" width="240" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+      <text x="720" y="332" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, sans-serif">claude-sonnet-5-5</text>
+      <text x="944" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">effort low</text>
+
+      <!-- Legend -->
+      <line x1="24" y1="400" x2="976" y2="400" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>
+      <text x="24" y="416" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="24" y="432" width="14" height="10" rx="2" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+      <text x="44" y="440" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Single point of failure</text>
+      <rect x="184" y="432" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="204" y="440" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Hosted app</text>
+      <rect x="288" y="432" width="14" height="10" rx="2" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+      <text x="308" y="440" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Managed store</text>
+      <rect x="408" y="432" width="14" height="10" rx="2" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+      <text x="428" y="440" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">External API</text>
+      <rect x="520" y="432" width="28" height="10" rx="2" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" stroke-dasharray="4,4" fill-opacity="0.02" stroke-opacity="0.20"/>
+      <text x="556" y="440" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Network / provider boundary</text>
+      <line x1="720" y1="438" x2="748" y2="438" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#deployment-arrow-link)"/>
+      <text x="756" y="440" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Encrypted call across a boundary</text>
+    </svg>
