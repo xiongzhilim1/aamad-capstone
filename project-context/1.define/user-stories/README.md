@@ -28,6 +28,7 @@ MVP user stories for Entrepreneur Peers, Circles & Events. There is one file per
 | [US-022](US-022-funnel-metrics.md) | View funnel metrics in separate units | Should | Admin | FR-020, MD-016, MP-005 |
 | [US-023](US-023-onboarding.md) | Short onboarding for new participants | Must | Participant (seasoned, new, or aspiring entrepreneur) | FR-022, MD-018, MN-016, AC-016 |
 | [US-024](US-024-ai-profile-assistant.md) | Describe myself in my own words; the AI drafts my profile fields | Must | Participant (seasoned, new, or aspiring entrepreneur) | FR-023, FR-024, MD-019 to MD-021, MN-013 to MN-016, AC-017 to AC-019 |
+| [US-025](US-025-late-attendance.md) | Say "I was there" after joining the app | Should | Participant who joined after an event | FR-025 to FR-027, MD-023 to MD-025, MN-017, AC-021 to AC-023 |
 
 Must stories cover the end-to-end journey (MP-004, AC-014): US-001 → US-023 (with US-024) → US-013 → US-014 → US-015 → US-004 → US-006 → US-007 → US-008 → US-009 → US-011. Should stories (US-016 to US-022) are PRD P1.
 
@@ -43,3 +44,4 @@ Must stories cover the end-to-end journey (MP-004, AC-014): US-001 → US-023 (w
 ## Audit
 - 2026-11-10 — persona: `product-mgr` — action: `*create-stories` — 22 stories — runtime resolved: `crewai`
 - 2026-11-14 — persona: `product-mgr` — action: `*create-stories` — added US-023 and US-024 (onboarding, AI profile assistant).
+- 2026-11-15 — persona: `product-mgr` — action: `*create-stories` — added US-025 (late attendance).

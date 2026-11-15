@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discover · prototype</title>
+<style>
+  :root, [data-palette="A"] {
+    --base-1:#16213A; --base-2:#2B6CB0; --paper:#FBF8F2; --ink:#16213A; --muted:#5C6270;
+    --accent:#C2410C; --on-accent:#FFFFFF; --on-base-1:#FFFFFF; --surface:#FFFFFF;
+    --tint:rgba(43,108,176,0.08); --danger:#B42318; --success:#2F6B3F;
+  }
+  [data-palette="B"] {
+    --base-1:#BFDDF3; --base-2:#FDFCF8; --paper:#FDFCF8; --ink:#1E2A38; --muted:#5B6472;
+    --accent:#B91C2C; --on-accent:#FFFFFF; --on-base-1:#1E2A38; --surface:#FFFFFF;
+    --tint:rgba(191,221,243,0.45); --danger:#B91C2C; --success:#2F6B3F;
+  }
+  [data-palette="C"] {
+    --base-1:#24402F; --base-2:#F4EDDC; --paper:#FBF7EE; --ink:#1F3328; --muted:#5A6B60;
+    --accent:#C2410C; --on-accent:#FFFFFF; --on-base-1:#FFFFFF; --surface:#FFFFFF;
+    --tint:rgba(244,237,220,0.9); --danger:#B42318; --success:#2F6B3F;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size:15px; line-height:1.5; color:var(--ink); background:var(--paper); }
+  button, select, input { font:inherit; color:inherit; }
+  :focus-visible { outline:3px solid var(--accent); outline-offset:2px; border-radius:6px; }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  /* Reviewer bar — not part of the product */
+  .reviewer { background:#2b2b2b; color:#f2f2f2; font-size:13px; padding:8px 16px; display:flex; flex-wrap:wrap; gap:12px 20px; align-items:center; }
+  .reviewer b { font-weight:600; letter-spacing:.04em; }
+  .reviewer label { display:flex; gap:6px; align-items:center; }
+  .reviewer select { background:#444; color:#fff; border:1px solid #666; border-radius:6px; padding:2px 6px; min-height:28px; }
+
+  .demo { background:var(--base-1); color:var(--on-base-1); font-size:13px; text-align:center; padding:4px 16px; }
+
+  .shell { display:flex; min-height:calc(100vh - 80px); }
+  nav.rail { display:none; }
+  main { flex:1; padding:20px 16px 120px; max-width:1100px; margin:0 auto; width:100%; }
+  h1 { font-size:26px; line-height:1.2; font-weight:600; }
+  .lede { color:var(--muted); margin-top:4px; }
+
+  .tabbar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid rgba(0,0,0,.12); display:flex; justify-content:space-around; padding:6px 0 10px; z-index:5; }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:12px; color:var(--muted); text-decoration:none; min-width:56px; min-height:44px; padding-top:4px; }
+  .tab svg { width:22px; height:22px; }
+  .tab[aria-current="page"] { color:var(--ink); font-weight:600; }
+  .tab[aria-current="page"] svg { color:var(--accent); }
+
+  .layout { display:block; margin-top:16px; }
+  .filters { background:var(--surface); border:1px solid rgba(0,0,0,.08); border-radius:10px; padding:16px; }
+  .filters h2 { font-size:15px; font-weight:600; margin-bottom:8px; }
+  .fgroup { margin-top:12px; }
+  .fgroup > span { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { border:1px solid rgba(0,0,0,.2); background:var(--surface); border-radius:999px; padding:4px 12px; min-height:32px; cursor:pointer; font-size:14px; }
+  .chip[aria-pressed="true"] { background:var(--base-1); color:var(--on-base-1); border-color:var(--base-1); }
+  select.f { width:100%; min-height:36px; border:1px solid rgba(0,0,0,.2); border-radius:8px; padding:4px 8px; background:var(--surface); }
+
+  .suggest-wrap { margin-top:16px; }
+  .btn { border:0; border-radius:8px; padding:10px 16px; min-height:44px; cursor:pointer; font-weight:600; }
+  .btn-primary { background:var(--accent); color:var(--on-accent); }
+  .btn-primary[disabled] { background:rgba(0,0,0,.08); color:var(--muted); cursor:not-allowed; }
+  .btn-secondary { background:transparent; color:var(--ink); border:1.5px solid var(--ink); }
+  .btn-quiet { background:transparent; color:var(--ink); text-decoration:underline; padding:10px 8px; }
+  .suggest-btn { width:100%; }
+  .why-disabled { font-size:13px; color:var(--muted); margin-top:6px; }
+
+  .banner { display:flex; gap:10px; align-items:flex-start; border-radius:10px; padding:12px 14px; margin-top:16px; border:1px solid; }
+  .banner.info { background:var(--tint); border-color:rgba(0,0,0,.08); }
+  .banner.warn { background:#FFF7E6; border-color:#E9C46A; color:#3D2E00; }
+  .banner svg { flex:none; width:20px; height:20px; margin-top:2px; }
+
+  .results-head { display:flex; justify-content:space-between; align-items:baseline; margin-top:24px; gap:12px; flex-wrap:wrap; }
+  .results-head h2 { font-size:17px; font-weight:600; }
+  .src { font-size:13px; color:var(--muted); }
+  .grid { display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px; }
+  .card { background:var(--surface); border:1px solid rgba(0,0,0,.08); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .card.ai { border-left:4px solid var(--base-2); }
+  [data-palette="B"] .card.ai { border-left-color:var(--base-1); }
+  [data-palette="C"] .card.ai { border-left-color:var(--base-1); }
+  .who { display:flex; gap:12px; align-items:center; }
+  .avatar { width:44px; height:44px; border-radius:50%; background:var(--base-1); color:var(--on-base-1); display:grid; place-items:center; font-weight:600; flex:none; }
+  .who h3 { font-size:17px; font-weight:600; line-height:1.2; }
+  .meta { font-size:13px; color:var(--muted); }
+  .tags { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { font-size:13px; background:var(--tint); border-radius:999px; padding:2px 10px; }
+  .reason { font-size:14px; background:var(--paper); border-radius:8px; padding:8px 10px; }
+  .reason .label { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:.03em; display:block; margin-bottom:2px; }
+  .card .actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .sent { font-size:14px; color:var(--success); font-weight:600; display:flex; align-items:center; gap:6px; }
+
+  .skeleton { background:var(--surface); border:1px solid rgba(0,0,0,.06); border-radius:10px; padding:16px; }
+  .sk { background:linear-gradient(90deg, rgba(0,0,0,.06), rgba(0,0,0,.11), rgba(0,0,0,.06)); background-size:200% 100%; border-radius:6px; height:12px; margin:8px 0; animation:sh 1.4s infinite; }
+  @keyframes sh { to { background-position:-200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .sk { animation:none; } }
+
+  .empty { text-align:center; background:var(--surface); border:1px dashed rgba(0,0,0,.2); border-radius:10px; padding:32px 16px; margin-top:12px; }
+  .empty h3 { font-size:17px; font-weight:600; }
+  .empty p { color:var(--muted); margin:6px 0 12px; }
+
+  .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:84px; background:var(--ink); color:var(--paper); padding:10px 16px; border-radius:8px; font-size:14px; max-width:90vw; z-index:10; }
+
+  @media (min-width:768px) {
+    .grid { grid-template-columns:1fr 1fr; }
+    .suggest-btn { width:auto; }
+  }
+  @media (min-width:1024px) {
+    .tabbar { display:none; }
+    nav.rail { display:flex; flex-direction:column; gap:4px; width:208px; background:var(--base-1); color:var(--on-base-1); padding:20px 12px; }
+    nav.rail a { color:inherit; text-decoration:none; display:flex; gap:10px; align-items:center; padding:8px 10px; border-radius:8px; min-height:40px; }
+    nav.rail a[aria-current="page"] { background:rgba(255,255,255,.14); font-weight:600; }
+    [data-palette="B"] nav.rail a[aria-current="page"] { background:rgba(255,255,255,.6); }
+    nav.rail svg { width:20px; height:20px; }
+    nav.rail .group { font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.8; margin:16px 10px 4px; }
+    nav.rail .brand { font-weight:600; font-size:17px; padding:0 10px 12px; }
+    main { padding:28px 32px 48px; }
+    .layout { display:grid; grid-template-columns:280px 1fr; gap:24px; align-items:start; }
+    .filters { position:sticky; top:16px; }
+    .grid { grid-template-columns:1fr 1fr; }
+    .toast { bottom:24px; }
+  }
+  @media (min-width:1280px) { .grid { grid-template-columns:1fr 1fr 1fr; } }
+</style>
+</head>
+<body data-palette="A">
+
+<div class="reviewer" role="region" aria-label="Prototype reviewer controls (not part of the product)">
+  <b>PROTOTYPE · reviewer controls</b>
+  <label>Palette
+    <select id="palette">
+      <option value="A">A · Ink / Azure / Vermillion</option>
+      <option value="B">B · Sky / Cloud / Scarlet</option>
+      <option value="C">C · Forest / Cream / Vermillion</option>
+    </select>
+  </label>
+  <label>AI state
+    <select id="aistate">
+      <option value="ok">Working</option>
+      <option value="down">AI unavailable</option>
+      <option value="limit">Rate-limited</option>
+    </select>
+  </label>
+  <span>Viewing as: Alex · new entrepreneur · interests: fintech, hiring</span>
+</div>
+
+<div class="demo">Demo · synthetic data. No real people or contact details.</div>
+
+<div class="shell">
+  <nav class="rail" aria-label="Main">
+    <div class="brand">Peers &amp; Circles</div>
+    <a href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>Discover</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c1-3 3-4 5-4s4 1 5 4M11 19c1-3 3-4 5-4s4 1 5 4"/></svg>Connections</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Circles</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Events</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-5 8-5s6.5 1 8 5"/></svg>Profile</a>
+  </nav>
+
+  <main id="main">
+    <h1>Who would you like to meet?</h1>
+    <p class="lede">Only people who chose to be listed appear here. Nothing is sent until you press a button.</p>
+
+    <div class="layout">
+      <section class="filters" aria-labelledby="fhead">
+        <h2 id="fhead">Filters</h2>
+        <div class="fgroup"><span id="stage-l">Stage</span>
+          <div class="chips" role="group" aria-labelledby="stage-l" id="stage-chips"></div>
+        </div>
+        <div class="fgroup"><label for="interest"><span>Interest or challenge</span></label>
+          <select class="f" id="interest"><option value="">Any</option></select>
+        </div>
+        <div class="fgroup"><label for="area"><span>Meet-up area</span></label>
+          <select class="f" id="area"><option value="">Any</option><option>Central</option><option>Kowloon</option><option>Sha Tin</option><option>Online only</option></select>
+        </div>
+        <div class="fgroup"><span id="show-l">Show</span>
+          <div class="chips" role="group" aria-labelledby="show-l" id="kind-chips"></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="rhead">
+        <div class="suggest-wrap">
+          <button class="btn btn-primary suggest-btn" id="suggest">Suggest people and circles for me</button>
+          <p class="why-disabled" id="why" hidden></p>
+        </div>
+        <div id="banner"></div>
+        <div class="results-head">
+          <h2 id="rhead">People and circles</h2>
+          <span class="src" id="src">From your filters</span>
+        </div>
+        <div aria-live="polite" id="live" class="sr"></div>
+        <div id="results" class="grid"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<nav class="tabbar" aria-label="Main">
+  <a class="tab" href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>Discover</a>
+  <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c1-3 3-4 5-4s4 1 5 4M11 19c1-3 3-4 5-4s4 1 5 4"/></svg>Connections</a>
+  <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Circles</a>
+  <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Events</a>
+  <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-5 8-5s6.5 1 8 5"/></svg>Profile</a>
+</nav>
+
+<script>
+// Synthetic data only. "private" fields are never rendered — they exist to show the rule.
+const PEOPLE = [
+  {id:'p1', name:'Mei', stage:'seasoned', area:'Central', tags:['fintech','fundraising'], private:['cash flow'], ai:"You both work in fintech, and Mei lists fundraising as a focus.", cited:['fintech']},
+  {id:'p2', name:'Daniel', stage:'new', area:'Kowloon', tags:['hiring','first customers'], private:[], ai:"You're both focused on hiring right now.", cited:['hiring']},
+  {id:'p3', name:'Priya', stage:'seasoned', area:'Online only', tags:['hiring','operations'], private:['burnout'], ai:"Priya is a seasoned founder who also lists hiring, which you're working on.", cited:['hiring']},
+  {id:'p4', name:'Kenji', stage:'aspiring', area:'Sha Tin', tags:['e-commerce','branding'], private:[]},
+  {id:'p5', name:'Wing', stage:'new', area:'Central', tags:['fintech','compliance'], private:[], ai:"You're both early-stage fintech founders based near Central.", cited:['fintech']},
+  {id:'p6', name:'Aisha', stage:'aspiring', area:'Kowloon', tags:['social enterprise','hiring'], private:[]},
+];
+const CIRCLES = [
+  {id:'c1', name:'Fintech founders, Thursday breakfasts', area:'Central', tags:['fintech'], policy:'request', faith:false, ai:"A fintech circle that meets in Central. Fintech is one of your interests.", cited:['fintech']},
+  {id:'c2', name:'First-hire support circle', area:'Online only', tags:['hiring'], policy:'open', faith:false, ai:"A circle about hiring, which you listed as a current focus.", cited:['hiring']},
+  {id:'c3', name:'Faith & business fellowship', area:'Kowloon', tags:['fundraising','operations'], policy:'request', faith:true},
+];
+const STAGES = [['seasoned','Seasoned'],['new','New'],['aspiring','Thinking of starting']];
+const state = { stages:new Set(), interest:'', area:'', kinds:new Set(['people','circles']), mode:'filters', sent:new Set(), ai:'ok' };
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function chip(container, label, pressed, onToggle){
+  const b=document.createElement('button'); b.className='chip'; b.type='button';
+  b.textContent=label; b.setAttribute('aria-pressed', pressed?'true':'false');
+  b.onclick=()=>{ const v=b.getAttribute('aria-pressed')!=='true'; b.setAttribute('aria-pressed', v); onToggle(v); };
+  container.appendChild(b);
+}
+STAGES.forEach(([k,l])=>chip($('#stage-chips'), l, false, v=>{ v?state.stages.add(k):state.stages.delete(k); state.mode='filters'; render(); }));
+[['people','People'],['circles','Circles']].forEach(([k,l])=>chip($('#kind-chips'), l, true, v=>{ v?state.kinds.add(k):state.kinds.delete(k); render(); }));
+[...new Set([...PEOPLE,...CIRCLES].flatMap(x=>x.tags))].sort().forEach(t=>{ const o=document.createElement('option'); o.textContent=t; $('#interest').appendChild(o); });
+$('#interest').onchange=e=>{ state.interest=e.target.value; state.mode='filters'; render(); };
+$('#area').onchange=e=>{ state.area=e.target.value; state.mode='filters'; render(); };
+$('#palette').onchange=e=>document.body.dataset.palette=e.target.value;
+$('#aistate').onchange=e=>{ state.ai=e.target.value; if(state.mode!=='filters') state.mode='filters'; render(); };
+
+function matches(x){
+  if(state.stages.size && x.stage && !state.stages.has(x.stage)) return false;
+  if(state.interest && !x.tags.includes(state.interest)) return false;
+  if(state.area && x.area!==state.area) return false;
+  return true;
+}
+
+function personCard(p, ai){
+  const sent = state.sent.has(p.id);
+  return `<article class="card ${ai?'ai':''}" aria-label="${esc(p.name)}">
+    <div class="who"><div class="avatar" aria-hidden="true">${esc(p.name[0])}</div>
+      <div><h3>${esc(p.name)}</h3><div class="meta">${esc(STAGES.find(s=>s[0]===p.stage)[1])} · ${esc(p.area)}</div></div></div>
+    <div class="tags">${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+    ${ai?`<p class="reason"><span class="label">SUGGESTED BY AI · WHY</span>${esc(p.ai)}</p>`:''}
+    <div class="actions">${sent
+      ? `<span class="sent" role="status"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>Requested</span><button class="btn btn-quiet" data-withdraw="${p.id}">Withdraw</button>`
+      : `<button class="btn btn-secondary" data-ask="${p.id}">Ask to connect</button>`}</div>
+  </article>`;
+}
+function circleCard(c, ai){
+  const sent = state.sent.has(c.id);
+  const action = c.policy==='open' ? 'Join circle' : 'Ask to join';
+  return `<article class="card ${ai?'ai':''}" aria-label="${esc(c.name)}">
+    <div class="who"><div class="avatar" aria-hidden="true" style="border-radius:10px">◎</div>
+      <div><h3>${esc(c.name)}</h3><div class="meta">Circle · ${esc(c.area)} · ${c.policy==='open'?'Open to join':'Facilitator approves'}${c.faith?' · Faith-centred':''}</div></div></div>
+    <div class="tags">${c.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+    ${ai?`<p class="reason"><span class="label">SUGGESTED BY AI · WHY</span>${esc(c.ai)}</p>`:''}
+    <div class="actions">${sent
+      ? `<span class="sent" role="status"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>${c.policy==='open'?'Joined':'Asked to join'}</span><button class="btn btn-quiet" data-withdraw="${c.id}">Undo</button>`
+      : `<button class="btn btn-secondary" data-ask="${c.id}">${action}</button>`}</div>
+  </article>`;
+}
+
+function render(){
+  const btn=$('#suggest'), why=$('#why'), banner=$('#banner');
+  btn.disabled = state.ai!=='ok' || state.mode==='loading';
+  why.hidden = state.ai==='ok';
+  why.textContent = state.ai==='down' ? 'Suggestions are unavailable right now. Filters still work.'
+                  : state.ai==='limit' ? "You've used 10 suggestions this hour. Try again at 14:20. Filters still work." : '';
+  btn.textContent = state.mode==='loading' ? 'Finding people for you…' : (state.mode==='ai' ? 'Suggest again' : 'Suggest people and circles for me');
+  banner.innerHTML = state.ai==='down'
+    ? `<div class="banner warn" role="status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><div><strong>Suggestions are unavailable right now.</strong> You can still browse and filter everyone who chose to be listed.</div></div>` : '';
+
+  const out=$('#results'); let html='';
+  if(state.mode==='loading'){
+    $('#src').textContent='AI is looking…';
+    html = `<div class="banner info" role="status" style="grid-column:1/-1"><div><strong>Finding people for you…</strong> <span id="still"></span></div></div>` +
+      [1,2,3].map(()=>`<div class="skeleton" aria-hidden="true"><div class="sk" style="width:40%"></div><div class="sk" style="width:70%"></div><div class="sk" style="width:90%"></div></div>`).join('');
+  } else if(state.mode==='ai'){
+    $('#src').textContent='Suggested by AI · you decide who to contact';
+    const ps = state.kinds.has('people') ? PEOPLE.filter(p=>p.ai) : [];
+    const cs = state.kinds.has('circles') ? CIRCLES.filter(c=>c.ai) : [];
+    html = ps.map(p=>personCard(p,true)).join('') + cs.map(c=>circleCard(c,true)).join('');
+  } else {
+    $('#src').textContent='From your filters';
+    const ps = state.kinds.has('people') ? PEOPLE.filter(matches) : [];
+    const cs = state.kinds.has('circles') ? CIRCLES.filter(matches) : [];
+    html = ps.map(p=>personCard(p,false)).join('') + cs.map(c=>circleCard(c,false)).join('');
+    if(!html) html = `<div class="empty" style="grid-column:1/-1"><h3>No one matches all these filters yet</h3><p>Try removing a filter${state.ai==='ok'?', or ask for suggestions':''}.</p><button class="btn btn-secondary" id="clear">Clear filters</button></div>`;
+  }
+  out.innerHTML = html;
+  out.querySelectorAll('[data-ask]').forEach(b=>b.onclick=()=>{ const id=b.dataset.ask; state.sent.add(id); const x=[...PEOPLE,...CIRCLES].find(i=>i.id===id);
+    toast(id.startsWith('p') ? `Request sent to ${x.name}. They'll see it in Needs your reply.` : (x.policy==='open'?`You joined ${x.name}.`:`Asked to join ${x.name}. The facilitator will reply.`)); render(); });
+  out.querySelectorAll('[data-withdraw]').forEach(b=>b.onclick=()=>{ state.sent.delete(b.dataset.withdraw); toast('Withdrawn. Nothing was sent to them.'); render(); });
+  const clear=$('#clear'); if(clear) clear.onclick=()=>{ location.reload(); };
+}
+
+let t1, t2;
+$('#suggest').onclick=()=>{
+  if(state.ai!=='ok') return;
+  state.mode='loading'; render(); $('#live').textContent='Finding people for you. This can take up to 15 seconds.';
+  clearTimeout(t1); clearTimeout(t2);
+  t1=setTimeout(()=>{ const s=document.getElementById('still'); if(s) s.textContent='Still looking. This can take up to 15 seconds.'; }, 1500);
+  t2=setTimeout(()=>{ state.mode='ai'; render(); $('#live').textContent='Suggestions ready.'; }, 3200);
+};
+
+function toast(msg){
+  const d=document.createElement('div'); d.className='toast'; d.setAttribute('role','status'); d.textContent=msg;
+  document.body.appendChild(d); setTimeout(()=>d.remove(), 3200);
+}
+render();
+</script>
+</body>
+</html>

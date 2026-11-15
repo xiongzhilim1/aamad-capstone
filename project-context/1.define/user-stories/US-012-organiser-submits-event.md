@@ -25,7 +25,7 @@ As an organiser, I want to draft an event and submit it for admin approval, so t
 ### 3. Acceptance Criteria
 
 1. Only users with the organiser role can create events.
-2. A draft records topic, date, time and timezone, mode, optional venue (from the directory, or free text), optional capacity, price and currency, and what is included.
+2. The date may be in the past ("Added after the event"), and the event still needs admin approval (MD-025, AC-023). A draft records topic, date, time and timezone, mode, optional venue (from the directory, or free text), optional capacity, price and currency, and what is included.
 3. Submitting moves the event from draft to submitted; organisers can edit a draft but not a submitted event without withdrawing it.
 4. A draft, submitted or rejected event is invisible to everyone except its organiser and the admin, through listing, detail, share link and API (AC-006, MN-005).
 
@@ -58,3 +58,4 @@ As an organiser, I want to draft an event and submit it for admin approval, so t
 ## Audit
 
 - 2026-11-10 — persona: `product-mgr` — action: `*create-stories` — runtime resolved: `crewai`
+- 2026-11-15 — persona: `product-mgr` — action: `*create-stories` (update) — past-dated events allowed.

@@ -2,7 +2,7 @@
 
 ## Context & Instructions
 PRD v1 produced by `@product-mgr` `*create-prd`. It replaces the owner draft `PRD-v0.md` as the authoritative product contract for the capstone MVP; PRD-v0 stays as a source. Requirement IDs (MD-*, MN-*, MC-*, MP-*, FR-*, NFR-*, AC-*) refer to `system-description.md`, which holds the full testable constraints. This PRD does not select an application pattern or a set of runtime agents; that is the SAD Pattern Decision (`@system.arch`).
-**Status:** PRD v1.1 (2026-11-14: adds onboarding and the AI profile assistant). An MVP contract for a capstone that uses synthetic data only. It does not approve a real-user launch.
+**Status:** PRD v1.2 (2026-11-14: onboarding and the AI profile assistant; 2026-11-15: late attendance by claim or event code, and past-dated events). An MVP contract for a capstone that uses synthetic data only. It does not approve a real-user launch.
 
 ## Input Requirements
 
@@ -103,6 +103,8 @@ PRD v1 produced by `@product-mgr` `*create-prd`. It replaces the owner draft `PR
 * **Circles** (FR-009): *As a participant, I can find circles, join them or request to join according to policy, and leave at any time.* Acceptance: AC-011, AC-010.
 * **Event submission and admin approval** (FR-012, FR-013, FR-014): *As an organiser, I submit a draft event; as the admin, I approve or reject it; only approved events are visible.* Acceptance: AC-006.
 * **Registration and attendance** (FR-015): *As a participant, I can register and withdraw; as an organiser, I confirm who attended.* Acceptance: AC-002, MN-007.
+* **Late attendance** (FR-025, FR-026, Should): *As someone who joined the app after an event, I can say "I was there" and either enter the event code the host shared (confirmed at once, within 7 days) or wait for the host to approve, so that I can still reconnect with people I met.* Acceptance: AC-021, AC-022; the reconnection list stays behind confirmed attendance (MN-017).
+* **Past-dated events** (FR-027, Should): *As an organiser, I can add an event that already happened, so that its attendees can reconnect.* It still goes through admin approval. Acceptance: AC-023.
 * **Synthetic seed data and persona login** (FR-021): the seed covers every stage, an approved and a pending event, a faith-tagged and a general circle, and blocked and declined cases. Acceptance: AC-014 runs on it.
 * **Onboarding** (FR-022): *As a new participant, I get a short guided start (name and stage → what I'm looking for → interests and challenges → discovery choice) and can skip anything optional.* Acceptance: AC-016.
 * **AI profile assistant** (FR-023): *As a participant, I can describe myself in my own words and get a structured draft (tags and a one-line summary) that I edit, accept or discard.* Acceptance: AC-017, AC-018; eval MP-007.
@@ -234,3 +236,4 @@ PRD v1 produced by `@product-mgr` `*create-prd`. It replaces the owner draft `PR
 - 2026-11-10 — persona: `product-mgr` — action: `*create-prd` — output: `project-context/1.define/prd.md` — runtime resolved: `crewai` (env `AAMAD_TARGET_RUNTIME`, matches `aamad.config.yml`) — mode: greenfield — no application pattern or agent roster prescribed — Prompt Trace omitted: this is a Define-phase artifact.
 - 2026-11-14 — persona: `product-mgr` — action: `*create-prd` (v1.1 update) — added FR-022 to FR-024 (onboarding, AI profile assistant, field visibility); resolved OQ-01, OQ-02 and OQ-03; added OQ-11 — runtime resolved: `crewai`.
 - 2026-11-14 — persona: `product-mgr` — action: `*create-prd` (v1.1 update) — OQ-11 resolved: staff access to *matching only* fields for the admin and own-circle facilitators, with logging and disclosure (MD-022, AC-020).
+- 2026-11-15 — persona: `product-mgr` — action: `*create-prd` (v1.2 update) — added FR-025 to FR-027 (late attendance by claim or event code; past-dated events).

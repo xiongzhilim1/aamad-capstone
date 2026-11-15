@@ -56,7 +56,7 @@ No application pattern is selected here; that belongs to `@system.arch`.
 |----|------|---------------------------------|---------------------|
 | MD-001 | Participants create a minimal profile that includes entrepreneur stage (seasoned / new / aspiring) | requirement | A profile cannot be saved without a stage value from the three allowed values; every other field except display name is optional |
 | MD-002 | Opt-in people directory | requirement | A profile appears in directory results only when its global discovery consent is `true`; the default is `false` |
-| MD-003 | Event-scoped reconnection after an event | requirement | After an event ends, only attendees marked attended who have opted in for that event can see each other in that event's reconnection list |
+| MD-003 | Event-scoped reconnection after an event | requirement | After an event ends, only people whose attendance is **confirmed** (by the organiser, an approved claim, or a valid event code, MD-023 and MD-024) and who have opted in for that event can see each other in that event's reconnection list |
 | MD-004 | Discovery tool: filter people and circles by stage, interests/challenges, meetup area and meeting preference | requirement | Filter results contain only discoverable, unblocked profiles and visible circles that match every applied filter |
 | MD-005 | AI suggests peers and circles from opted-in profiles; the user decides | requirement | Every suggestion shown is discoverable to the viewer, is not the viewer, is not blocked, and has a reason that names at least one profile field both sides share; no request is sent without a user action |
 | MD-006 | Private connection request with accept / decline | requirement | Only the recipient can accept or decline; the sender never sees more about a decline than the OQ-06 policy allows |
@@ -75,6 +75,9 @@ No application pattern is selected here; that belongs to `@system.arch`.
 | MD-019 | AI profile assistant: free text about interests, challenges and what I'm looking for is turned into structured fields that the user reviews | requirement | The assistant returns a draft of tags plus a one-line summary; nothing is saved until the user edits or accepts it; the user can discard the draft and enter fields by hand |
 | MD-020 | Per-field visibility: each profile field is either *shown on profile* or *matching only* | requirement | A *matching only* field never appears in another participant's API response or UI. It may be sent to the suggestion model when it is a permitted matching field (MD-021), and it is visible to staff only as MD-022 allows |
 | MD-022 | Staff access to *matching only* fields (OQ-11 resolved) | requirement | The **admin** can view any participant's *matching only* fields; a **circle facilitator** can view them only for members of, and pending applicants to, their own circle; **organisers have no access**. Every staff view is logged (viewer, subject, fields, time), and the user is told who can see these fields at the moment they choose *matching only* |
+| MD-023 | Attendance claim for people not registered beforehand ("I was there") | requirement | Any signed-in participant can claim attendance at an approved event that has started, without registering first; the claim is `claimed` until the organiser or a co-host approves (`confirmed`) or declines it (`declined`); a claimed or declined person sees no attendee data |
+| MD-024 | Event attendance code | requirement | The organiser can generate, rotate or disable a short code per event; entering a valid code within **7 days after the event ends** confirms attendance at once; the organiser can see who joined by code and remove them; wrong-code attempts are limited (5 per hour per user) |
+| MD-025 | Past-dated events | requirement | An organiser can create an event whose date has already passed; it still requires admin approval before anyone can see it (MD-011); the event page labels it "Added after the event" |
 | MD-021 | Permitted matching fields (OQ-03 resolved) | requirement | The suggestion model input contains only: stage, looking-for, interests, challenges, industry (a hint, not a required match), meeting preferences (mode, time window, coarse area), the verified one-line summary, and faith context only when its matching opt-in is on; nothing else |
 
 #### Must not do
@@ -97,6 +100,7 @@ No application pattern is selected here; that belongs to `@system.arch`.
 | MN-014 | The profile assistant never infers faith or sensitive attributes, and never invents facts | requirement | Eval cases whose free text mentions faith, health or family produce no faith or sensitive tag; every drafted tag traces to words in the user's text |
 | MN-015 | Raw free text is private to its author and never reaches the suggestion model | requirement | The raw text is not returned to any other user, is not in suggestion-model input, and is deleted once the user accepts or discards the draft |
 | MN-016 | Onboarding is never a gate for consent-based features | requirement | A participant who skips optional onboarding can still opt in to event reconnection or the directory, and onboarding never turns either consent on |
+| MN-017 | Attendance claims and codes never bypass the publication gate or reveal attendees early | requirement | Claims and codes are accepted only for approved events; the reconnection list is returned only for `confirmed` attendance; an expired, disabled or wrong code confirms nothing |
 
 #### Must cost
 
@@ -149,6 +153,9 @@ No application pattern is selected here; that belongs to `@system.arch`.
 | FR-022 | Short onboarding flow ending with the directory-consent choice | Must | MD-018, MN-016 |
 | FR-023 | AI profile assistant: free text → drafted tags and one-line summary → user edits, accepts or discards | Must | MD-019, MN-013, MN-014, MN-015, MC-006, MP-007 |
 | FR-024 | Per-field visibility setting (shown on profile / matching only) | Must | MD-020, MD-021 |
+| FR-025 | "I was there" attendance claim and the organiser's approve/decline list | Should | MD-023, MN-017 |
+| FR-026 | Event attendance code: generate, rotate, disable, enter | Should | MD-024, MN-017 |
+| FR-027 | Create an event with a past date (admin approval still required) | Should | MD-025, MD-011 |
 
 ### 5. Non-Functional Requirements
 
@@ -203,6 +210,9 @@ No application pattern is selected here; that belongs to `@system.arch`.
 - **AC-018** Given free text that mentions faith, health or family, when the assistant drafts fields, then no faith or sensitive tag appears in the draft. (MN-014)
 - **AC-019** Given a field set to *matching only*, when another participant views the profile or calls the profile API, then the field is absent; and suggestion-model input contains only MD-021 fields. (MD-020, MD-021)
 - **AC-020** Given participant P's *matching only* fields, when the admin views P, then the fields are shown and a view-log entry is written; when facilitator F views P and P is a member of or applicant to F's circle, then the same applies; when F views a non-member, or any organiser views P, then the fields are absent. (MD-022)
+- **AC-021** Given an approved past event and a participant who never registered, when they tap "I was there", then their status is `claimed` and they see no attendee list; when the organiser approves, then they can opt in and see the list; when the organiser declines, then nothing is revealed. (MD-023, MN-017)
+- **AC-022** Given an event code, when a participant enters it within 7 days after the event ends, then attendance is `confirmed` at once; when the code is wrong, expired or disabled, then nothing changes and a clear message is shown; the sixth wrong attempt within an hour is refused. (MD-024)
+- **AC-023** Given an organiser creates an event dated in the past, then it enters the admin queue like any other event and is invisible until approved. (MD-025, MD-011)
 
 ### 9. Out of Scope / Future Work
 
@@ -238,6 +248,7 @@ No application pattern is selected here; that belongs to `@system.arch`.
 - ~~**OQ-03** Matching signals.~~ Resolved 2026-11-14: fields listed in MD-021. Weighting is left to the suggestion prompt and is measured by the MP-003 eval.
 - ~~**OQ-01** Model spend.~~ Resolved 2026-11-14: US$20 total for the capstone; ≤ US$0.05 per suggestion request. Latency target stays the proposed p95 ≤ 15 s.
 - ~~**OQ-02** Eval threshold.~~ Resolved 2026-11-14: ≥ 80% agreement with a hand-labelled set of synthetic profiles modelled on public patterns, never copied from real individuals.
+- **OQ-12** The code window (7 days after the event) and the attempt limit (5 per hour) are proposed values; confirm or adjust.
 - ~~**OQ-11** Who sees *matching only* fields?~~ Resolved 2026-11-14: the suggestion model, the admin, and circle facilitators for their own members and applicants (MD-022). Organisers have no access.
 - **OQ-04** Circle creation rights, admission policy defaults, capacity, and facilitator powers.
 - **OQ-05** Can users see public events without logging in, and should events be public or invite-only (PRD-v0 E04)?
@@ -253,3 +264,4 @@ No application pattern is selected here; that belongs to `@system.arch`.
 - 2026-11-10 — persona: `product-mgr` — action: quality pass — clarified MD-006 wording; marked OQ-09 resolved.
 - 2026-11-14 — persona: `product-mgr` — action: `*elicit-requirements` (onboarding update) — added MD-018 to MD-021, MN-013 to MN-016, MC-006, MP-007, FR-022 to FR-024, AC-016 to AC-019; resolved OQ-01, OQ-02 and OQ-03; added OQ-11. Source: operator answers 2026-11-14.
 - 2026-11-14 — persona: `product-mgr` — action: `*elicit-requirements` (update) — OQ-11 resolved: added MD-022 and AC-020; clarified MD-020 and AC-019.
+- 2026-11-15 — persona: `product-mgr` — action: `*elicit-requirements` (update) — late attendance: added MD-023 to MD-025, MN-017, FR-025 to FR-027, AC-021 to AC-023 and OQ-12; revised MD-003. Source: operator decisions 2026-11-15 (claim plus event code, and past-dated events).

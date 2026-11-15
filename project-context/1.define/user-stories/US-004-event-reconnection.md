@@ -24,7 +24,7 @@ As a participant, I want to opt in, after an event I attended, to see other opte
 
 ### 3. Acceptance Criteria
 
-1. Given an approved event has ended and the organiser has confirmed I attended, when I open the event, then I can opt in to its reconnection list.
+1. Given an approved event has ended and my attendance is confirmed (by the organiser, an approved "I was there" claim, or a valid event code; US-025), when I open the event, then I can opt in to its reconnection list.
 2. Given A and B both attended and opted in, when A opens the reconnection list, then B appears; C, who registered but was not confirmed as attending, does not appear (AC-002).
 3. Opting in to an event's reconnection list does not change my global directory consent (MN-001).
 4. People I blocked, or who blocked me, do not appear (AC-005).
@@ -37,7 +37,7 @@ As a participant, I want to opt in, after an event I attended, to see other opte
 
 ### 5. Traceability
 
-- **PRD Anchors**: FR-003, MD-003, MD-012, MN-007, AC-002
+- **PRD Anchors**: FR-003, MD-023, MD-024, MD-003, MD-012, MN-007, AC-002
 - **Related SFS**: to be created by `@system.arch` (`project-context/1.define/sfs/`)
 
 ## Sources
@@ -58,3 +58,4 @@ As a participant, I want to opt in, after an event I attended, to see other opte
 ## Audit
 
 - 2026-11-10 — persona: `product-mgr` — action: `*create-stories` — runtime resolved: `crewai`
+- 2026-11-15 — persona: `product-mgr` — action: `*create-stories` (update) — AC1 now accepts claim- and code-confirmed attendance.

@@ -29,3 +29,6 @@ build/
 # Editors
 .vscode/
 .idea/
+
+# Local browser-check artefacts
+.playwright-mcp/

@@ -20,7 +20,7 @@ User story produced by `@product-mgr` `*create-stories` from the PRD and system 
 
 ### 2. Narrative
 
-As an organiser, I want to mark which registrants actually attended, so that only real attendees become eligible to reconnect.
+As an organiser, I want to mark which registrants actually attended, and approve or decline "I was there" claims from people who weren't registered, so that only real attendees become eligible to reconnect.
 
 ### 3. Acceptance Criteria
 
@@ -28,15 +28,17 @@ As an organiser, I want to mark which registrants actually attended, so that onl
 2. Marking someone attended makes them eligible for that event's reconnection list (US-004); it does not opt them in.
 3. Registered-but-not-attended people never become eligible (AC-002).
 4. Attendance marks can be corrected, and the correction is recorded.
+5. The host tools show an *Attendance claims* list (name, claim time) with Approve and Decline, and a *Joined by code* list with Remove (MD-023, MD-024, AC-021).
+6. The organiser can generate, rotate or disable the event code (US-025).
 
 ### 4. Scope Notes
 
 - **In Scope for MVP**: Mark and unmark attendance.
-- **Deferred**: Check-in by QR code; attendee self-check-in.
+- **Deferred**: QR-code check-in; claim expiry windows; reminders to organisers about pending claims.
 
 ### 5. Traceability
 
-- **PRD Anchors**: FR-015, MD-003, MD-012
+- **PRD Anchors**: FR-015, FR-025, FR-026, MD-003, MD-012, MD-023, MD-024
 - **Related SFS**: to be created by `@system.arch` (`project-context/1.define/sfs/`)
 
 ## Sources
@@ -58,3 +60,4 @@ As an organiser, I want to mark which registrants actually attended, so that onl
 ## Audit
 
 - 2026-11-10 — persona: `product-mgr` — action: `*create-stories` — runtime resolved: `crewai`
+- 2026-11-15 — persona: `product-mgr` — action: `*create-stories` (update) — added the claims list, the code-joined list and code management.
