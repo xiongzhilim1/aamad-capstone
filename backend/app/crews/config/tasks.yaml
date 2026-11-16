@@ -1,0 +1,50 @@
+# One task per crew (SAD §2). The task key carries the prompt version: changing a prompt
+# means adding a new version and re-running the eval (swap-as-release rule).
+# Outputs are returned in memory (output_pydantic); nothing is written to a file.
+
+suggest_v1:
+  agent: peer_matcher
+  max_tokens: 3000
+  description: >
+    Suggest people and circles for the viewer.
+
+    <data>
+    {payload}
+    </data>
+
+    Pick at most 10 suggestions in total, best first, mixing people and circles when both fit.
+    Leave out weak matches rather than padding the list. For each suggestion return:
+    - candidate_id: the id exactly as given.
+    - kind: "person" or "circle".
+    - reason: one short sentence of at most 20 words, addressed to the viewer as "you", saying what
+      you have in common or how you could help each other. Use plain words, not field names
+      or tag ids. Do not use names. Longer reasons are discarded.
+    - cited_fields: the field names the reason relies on. For a person, each must be a field
+      present on the viewer and in that person's `citable` fields. For a circle, use the
+      circle's own field names (for example "tags" or "purpose").
+  expected_output: >
+    A JSON object with one key, items: a list of at most 10 objects with candidate_id, kind,
+    reason and cited_fields.
+
+draft_profile_v1:
+  agent: profile_drafter
+  max_tokens: 1500
+  description: >
+    Draft profile fields from the author's own words.
+
+    <author_text>
+    {text}
+    </author_text>
+
+    Allowed tags:
+    interests: {interests}
+    challenges: {challenges}
+    looking_for: {looking_for}
+    industry (at most one): {industries}
+
+    Return up to 5 tags per list, each with its evidence phrase copied from the text, an
+    industry only if the text states the kind of business, and a summary: one neutral sentence
+    of at most 200 characters, in the third person without a name, using only what the text says.
+  expected_output: >
+    A JSON object with interests, challenges and looking_for (lists of objects with tag and
+    evidence), industry (an object with tag and evidence, or null) and summary (a string).

@@ -24,6 +24,7 @@ build/
 
 # Logs and runtime storage
 *.log
+project-context/2.build/logs/*.jsonl
 .crewai/
 
 # Editors

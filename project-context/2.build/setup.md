@@ -12,10 +12,10 @@ aamad-capstone/
 │   ├── AGENTS.md             written by Next.js; points agents at the bundled docs
 │   └── .env.example          BACKEND_URL
 ├── backend/                  FastAPI + CrewAI, Python 3.12, uv                    → @backend.eng
-│   ├── app/main.py           FastAPI app with GET /healthz only
+│   ├── app/main.py           app factory; routes in app/api/routes (contract in backend/openapi.json)
 │   ├── app/ai/               the two crew wrappers go here (SAD §4 Runtime Integration Layer)
 │   ├── app/crews/config/     agents.yaml / tasks.yaml go here (CrewAI adapter rule)
-│   ├── migrations/           Alembic migrations (not initialised yet)
+│   ├── migrations/           Alembic migrations (0001 initial schema, RLS enabled)
 │   ├── tests/test_healthz.py smoke test
 │   ├── Dockerfile            python:3.12-slim + uv, locked install, /healthz HEALTHCHECK
 │   └── .env.example          backend env names (SAD §4)
@@ -50,7 +50,8 @@ aamad-capstone/
 | `alembic` | 1.20.1 | migrations |
 | `psycopg[binary]` | 3.3.9 | Postgres driver (Supabase in production) |
 | `pydantic-settings` | 2.16.3 | env-based config |
-| dev: `pytest` 9.2.0, `httpx` 0.28.1, `ruff` 0.17.5, `mypy` 2.4.1 | | tests, lint, types |
+| `pyyaml` | (locked in `uv.lock`) | direct dependency: loads the crew YAML config |
+| dev: `pytest` 9.2.0, `httpx` 0.28.1, `ruff` 0.17.5, `mypy` 2.4.1, `types-pyyaml` | | tests, lint, types |
 
 Not installed (left for the owning persona): a UI component library or icon set (`@frontend.eng`, per ux.md), a typed OpenAPI client generator (`@integration.eng`).
 
@@ -58,7 +59,7 @@ Not installed (left for the owning persona): a UI component library or icon set 
 
 Names only; real values never committed (`.env` and `.env.*` are git-ignored except `.env.example`).
 
-- `backend/.env.example`: `ANTHROPIC_API_KEY`, `DATABASE_URL`, `SESSION_SECRET`, `DEMO_ACCESS_CODE`, `ALLOWED_ORIGINS`, `AI_SPEND_CAP_USD` (20), `AI_MODEL_SUGGEST` / `AI_MODEL_ASSIST` (`claude-sonnet-5-5`), `AAMAD_TARGET_RUNTIME`.
+- `backend/.env.example`: `ANTHROPIC_API_KEY`, `DATABASE_URL`, `SESSION_SECRET`, `DEMO_ACCESS_CODE`, `ALLOWED_ORIGINS`, `AI_SPEND_CAP_USD` (20), `AI_MODEL_SUGGEST` / `AI_MODEL_ASSIST` (`claude-sonnet-5-5`), `AAMAD_TARGET_RUNTIME`, `AI_EFFORT` (`low`), `COOKIE_SECURE` (`true`), `TRACE_LOG_DIR`.
 - `frontend/.env.example`: `BACKEND_URL` (server-side, used by the rewrite).
 - Root `.env.example`: `AAMAD_TARGET_RUNTIME=crewai`.
 
@@ -73,6 +74,7 @@ cd backend && uv sync && cd ..
 
 # run (Docker Desktop required for the database)
 docker compose up db                           # Postgres on :5432
+cd backend && uv run alembic upgrade head && uv run python -m app.seed   # schema + synthetic seed
 cd backend && uv run uvicorn app.main:app --reload --port 8000
 cd frontend && npm run dev                     # http://localhost:3000, /api → :8000
 
@@ -130,3 +132,4 @@ If the shell has a project-root virtualenv active, `unset VIRTUAL_ENV` before `u
 - 2026-11-15 — persona: `project-mgr` — action: `sync-docs` — Doc sync: no descriptive updates (setup.md is the only allowlisted doc and was written in this change set; the root README describes the AAMAD framework, not the app). Spec drift is reported in §8 for `@system.arch`.
 - 2026-11-15 — persona: `project-mgr` — action: `*document-setup` (update) — Docker verified: compose db healthy; backend image builds and serves /healthz.
 - 2026-11-15 — persona: `project-mgr` — action: CI fix — added `next typegen` before `tsc` in CI and in the local check command.
+- 2026-11-16 — persona: `backend-eng` — action: `sync-docs` — operator approved all five items: §1 tree (main.py, migrations), §3 (`pyyaml`, `types-pyyaml`), §4 (three new env names), §5 (migrate and seed step). Source: `backend/app/main.py`, `backend/migrations/`, `backend/pyproject.toml`, `backend/.env.example`, `backend/app/seed.py`.
