@@ -233,7 +233,7 @@ Also passing: `ruff check`, `ruff format --check`, `mypy --strict app`, `alembic
 
 ## Open Questions
 
-- **Spec drift for `@system.arch`** (reported, not patched):
+- ~~**Spec drift for `@system.arch`**~~ Resolved 2026-11-17: the operator accepted all six items and the SAD was updated to match (see the SAD Audit). The items were:
   1. SAD §4 names "LiteLLM" as the model layer; the build uses CrewAI's native Anthropic provider (already reported in setup.md §8). OQ-A03 can be closed with the results in §7.
   2. SAD §2 says `effort` is set in the crew config; CrewAI has no such setting, so it is an env value applied by a request hook.
   3. SAD §2 `ProfileDraft` is flat; the model-facing schema adds an `evidence` quote per tag for W22. The API shape is still the flat one.

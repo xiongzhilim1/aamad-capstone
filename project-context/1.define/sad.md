@@ -107,8 +107,8 @@ The editable source of this figure is `project-context/diagrams/system-arch/refe
   Profile assistant (W21), estimated about 1K in and about 1.5K out: Sonnet 5.5 ≈ $0.017, Haiku 5.5 ≈ $0.001. The MC-006 proposal of ≤ US$0.01 holds only on Haiku 5.5, or on Sonnet 5.5 with output kept below about 0.8K tokens. Prices are list prices from the `claude-api` skill reference (cached 2026-10-06) and must be re-checked before Build.
 - **Context strategy**: progressive. Each call gets only what its step needs, assembled by code at request time. There is no conversation history, no memory and no retrieval index.
 - **Swap-as-release rule**: every change of model, effort level or prompt version is a release. It must re-run the relevant eval (MP-003 or MP-007) and meet these rollback criteria, written before the swap: roll back if relevance falls below 80% of gold-set agreement, if any eligibility, grounding or faith-leak case fails, or if p95 latency or cost per request exceeds MC-003 or MC-004.
-- **Entry point**: direct API, called through CrewAI's model layer (LiteLLM) inside the backend. There is no hosted chat, agent SDK or MCP server.
-- **Entry-point tradeoff named at decision time**: CrewAI gives YAML-externalised agents and tasks, `output_pydantic` and `Task.guardrail`, all of which the adapter rules require. The cost is a dependency on LiteLLM passing current Claude parameters correctly. Two known risks for Build to verify (OQ-A03): (1) the 5.5-generation models reject `temperature`, so no temperature may be set anywhere in the crew config; (2) native structured outputs and the `effort` setting may not pass through LiteLLM. If they don't, the schema is still enforced by `output_pydantic` plus one retry (CR-005).
+- **Entry point**: direct API, called through CrewAI's native Anthropic provider (the `anthropic` SDK; LiteLLM is not used) inside the backend. There is no hosted chat, agent SDK or MCP server.
+- **Entry-point tradeoff named at decision time**: CrewAI gives YAML-externalised agents and tasks, `output_pydantic` and `Task.guardrail`, all of which the adapter rules require. The cost is a dependency on CrewAI's provider passing current Claude parameters correctly. Build verified this on 2026-11-16 (OQ-A03, `backend.md` §7): (1) no `temperature` is sent, and none may be set anywhere in the crew config; (2) structured output is passed, by the deprecated `output_format` parameter on Sonnet 5.5 and by a forced tool choice on Haiku 5.5, so both must be re-checked on any model or dependency change; (3) CrewAI has no `effort` setting, so the backend adds it to each request through CrewAI's request hook. The schema is also enforced by `output_pydantic` plus one retry (CR-005).
 - **Entry-point responsibility map**: one route only (backend → CrewAI → Anthropic API). The browser never calls the model.
 - **Minimum data in the context window**:
   - *Suggestion crew (W07)*: the viewer's MD-021 matching fields; for each candidate, a short opaque id plus their MD-021 fields; for each circle, an id, purpose and tags. **Never**: names, contact fields, raw free text, faith when its opt-in is off, block or consent state, event attendance lists, or any field set to "shown on profile" that is not also an MD-021 field.
@@ -156,7 +156,7 @@ Review routing summary: suggestions have no queue, because they are reversible a
 
 - **Volume**: the *capstone* volume is a handful of synthetic users, and the main spend is evals. The estimate is about US$6–10 of the US$20 cap on Sonnet 5.5: roughly 30 gold cases × 5 iterations × 2 crews. The *expected* volume for a possible beachhead pilot (not approved) is about 100 participants × 2 suggestion requests a week ≈ 200 requests a week, or ≈ US$8.40 a week on Sonnet 5.5 and ≈ US$0.40 a week on Haiku 5.5. The spend breaker (CR-010) must be re-set before any pilot.
 - **Latency**: the p95 target is ≤ 15 s (MC-003). The main driver is output length, so the design keeps output to 10 suggestions with reasons of ≤ 25 words at `effort: low`, and the UI shows a loading state. p95 must be measured in Build; if it misses the target, reduce the output length before changing the model.
-- **Retries, fallback chain, circuit breaker**: the SDK or LiteLLM retries 429, 5xx and connection errors with backoff (at most 2 retries); one schema retry (CR-005); overall timeout of 20 s per request. Fallback chain: AI suggestions → filter discovery (suggestions) and AI draft → manual tag entry (assistant). Circuit breaker: 5 consecutive model failures within 5 minutes switch the AI off for 10 minutes. The spend breaker switches it off at US$20.
+- **Retries, fallback chain, circuit breaker**: the Anthropic SDK retries 429, 5xx and connection errors with backoff (at most 2 retries); one schema retry (CR-005); overall timeout of 20 s per request. Fallback chain: AI suggestions → filter discovery (suggestions) and AI draft → manual tag entry (assistant). Circuit breaker: 5 consecutive model failures within 5 minutes switch the AI off for 10 minutes. The spend breaker switches it off at US$20.
 - **Failure mode specific to this architecture (document pipeline)**: *structurally valid but wrong output*, meaning invented ids, invented shared fields or stale eligibility. Mitigation: CR-006, including the display-time re-check for someone who opts out while the call is running.
 - **Per-request traces versus aggregate dashboards**: per-request trace records (CR-013) answer "why did this person see this suggestion?". They are stored as JSON lines under `project-context/2.build/logs` for the capstone. A separate aggregate view answers "is the system healthy?": daily spend versus cap, p95 latency, fallback rate, schema-failure rate, dropped-item rate by reason, and assistant accept/edit/discard rates. The aggregate view is built from the traces and never shows profile content.
 
@@ -200,14 +200,14 @@ The Pattern Decision requires two model calls on separate paths, so there are tw
 - **Flow**: API handler → deterministic input assembly (W06 or the assistant builder) → `crew.kickoff(inputs=…)` → `Task.guardrail` (W08 or W22) → response. There is one task per crew, so no task-to-task context chaining.
 - **Expected outputs**:
   - `SuggestionResult { items: [{candidate_id, kind: "person"|"circle", reason (≤ 25 words), cited_fields: [str]}] (≤ 10) }`
-  - `ProfileDraft { interests: [tag], challenges: [tag], looking_for: [tag], industry?: tag, summary (≤ 200 chars) }`
+  - `ProfileDraft { interests: [tag], challenges: [tag], looking_for: [tag], industry?: tag, summary (≤ 200 chars) }`. This is the shape the API returns. The model-facing schema carries each tag as `{tag, evidence}`, where `evidence` is a phrase quoted from the author's text; W22 keeps a tag only when the quote is found verbatim in that text, then discards the evidence.
 - **Errors**: guardrail failure or a schema miss leads to one retry; after a second failure, a timeout (20 s), a refusal or a budget-breaker trip, the request falls back (suggestions → filter discovery; assistant → manual tags). Cancellation: if the client disconnects, the result is discarded and still logged.
 - **Budgets**: at most 2 model invocations per request; `max_tokens` about 3,000 for suggestions and about 1,500 for the assistant (output-bounded, MC-002, MC-006); per-user rate 10 per hour per action (OQ-A04); global spend breaker at US$20 (CR-010).
 
 **Runtime-Conditional Configuration (crewai)**:
 
 - `backend/app/crews/config/agents.yaml` and `tasks.yaml` hold one agent and one task per crew. `Process.sequential`, `allow_delegation: false`, `memory: false`, `max_iter: 2`, `max_retry_limit: 2`, `max_execution_time: 20`, crew-level `max_rpm` (proposed 30), and `output_pydantic` set to the schemas above.
-- **Model**: `claude-sonnet-5-5` with `effort: low` (OQ-A02). **No `temperature`**, because 5.5-generation models reject it (adapter deviation, see Model and Context Strategy). The challenger eval runs the same config with `claude-haiku-5-5`.
+- **Model**: `claude-sonnet-5-5` with `effort: low` (OQ-A02). The model ids and the effort level are environment settings (`AI_MODEL_SUGGEST`, `AI_MODEL_ASSIST`, `AI_EFFORT`), not YAML keys; effort is applied to each request by a request hook because CrewAI has no setting for it. **No `temperature`**, because 5.5-generation models reject it (adapter deviation, see Model and Context Strategy). The challenger eval runs the same config with `claude-haiku-5-5`.
 - **Task ids and outputs**: `suggest_v{n}` and `draft_profile_v{n}`, with the prompt version in the id. Outputs are returned in memory, not written to files; the trace goes to `project-context/2.build/logs` (CR-013).
 - **Startup check**: refuse to boot if any agent has tools bound, or if YAML references unknown fields (CR-008).
 
@@ -249,8 +249,8 @@ The Pattern Decision requires two model calls on separate paths, so there are tw
 | Ops | `GET /healthz` | Unauthenticated liveness check |
 
 - **Validation**: Pydantic request models; length caps (bio 200 characters, free text 1,500); tags validated against the vocabulary.
-- **Rate limiting**: per session, 10 per hour on `/suggestions` and `/me/profile/draft` (OQ-A04); the global spend breaker (CR-010).
-- **Error envelope**: `{ "error": { "code": "string", "message": "human-readable", "fallback": "filters|manual|null", "trace_id": "string" } }`. Authorization failures return 404 for resources whose existence is private (unpublished events, other people's requests) and 403 otherwise.
+- **Rate limiting**: per user, 10 per hour on `/suggestions` and `/me/profile/draft` (OQ-A04), so signing out and in again does not reset it; the global spend breaker (CR-010).
+- **Error envelope**: `{ "error": { "code": "string", "message": "human-readable", "fallback": "filters|manual|null", "trace_id": "string" } }`, with two optional keys: `fields` (a list of `{field, message}` on validation errors) and `retry_at` (on rate-limit errors). Authorization failures return 404 for resources whose existence is private (unpublished events, other people's requests) and 403 otherwise.
 
 **Data Architecture** (Supabase Postgres; persistence is required by the PRD):
 
@@ -265,7 +265,7 @@ The Pattern Decision requires two model calls on separate paths, so there are tw
 
 **Authentication & Secrets** (names only, in `.env.example`):
 
-- Backend: `ANTHROPIC_API_KEY`, `DATABASE_URL` (Supabase Postgres, server-only), `SESSION_SECRET`, `AI_SPEND_CAP_USD` (20), `AI_MODEL_SUGGEST`, `AI_MODEL_ASSIST`, `ALLOWED_ORIGINS`, `DEMO_ACCESS_CODE`, `AAMAD_TARGET_RUNTIME`.
+- Backend: `ANTHROPIC_API_KEY`, `DATABASE_URL` (Supabase Postgres, server-only), `SESSION_SECRET`, `AI_SPEND_CAP_USD` (20), `AI_MODEL_SUGGEST`, `AI_MODEL_ASSIST`, `ALLOWED_ORIGINS`, `DEMO_ACCESS_CODE`, `AAMAD_TARGET_RUNTIME`, `AI_EFFORT` (`low`), `COOKIE_SECURE` (`true`), `TRACE_LOG_DIR`.
 - Frontend: `NEXT_PUBLIC_API_BASE_URL` only. No secret is ever prefixed `NEXT_PUBLIC_`.
 
 ### 5. DevOps & Deployment Architecture
@@ -286,7 +286,7 @@ The editable source of this figure is `project-context/diagrams/system-arch/depl
 - **Suggestion path**: browser → Vercel `/api/suggestions` → Next.js rewrite → backend `POST /suggestions` (cookie session) → session actor → rate limit and spend check → W06 live query (Supabase) → prompt assembly (CR-002, CR-003, CR-015 citable/rank-only split) → `suggestion_crew` → Anthropic API → guardrail W08 plus display-time re-check → JSON list → browser. The fallback branch returns `{fallback: "filters"}` with filter results.
 - **Assistant path**: browser → `POST /me/profile/draft` with the text → length cap → `profile_assistant_crew` → guardrail W22 → draft held in the server session → browser review → `accept` writes only the accepted fields with their visibility → raw text deleted.
 - **Everything else**: browser → API → policy module → Postgres → response. No model is involved.
-- **External integrations in the MVP**: the Anthropic API (through CrewAI and LiteLLM) and Supabase Postgres. Nothing else.
+- **External integrations in the MVP**: the Anthropic API (through CrewAI's native Anthropic provider) and Supabase Postgres. Nothing else.
 - **Error propagation**: every error returns the envelope from §4 with a `trace_id`; the UI shows a human message and, where defined, the fallback. It never shows a raw model error.
 
 ### 7. Performance & Scalability Specifications
@@ -382,7 +382,7 @@ Gold sets are synthetic profiles modelled on public patterns, never copied from 
 - ~~**OQ-A01** Gold-set provenance.~~ Resolved 2026-11-14 by the operator: synthetic profiles are modelled on public, aggregate patterns (roles, industries, stages, challenges among HK entrepreneurs) and are never copied or scraped from identifiable individuals (MN-008).
 - Operator confirmed 2026-11-14 that W07 is the only model-owned step; event approval stays purely human.
 - ~~**OQ-A02** Model choice.~~ Resolved 2026-11-14 by the operator: Claude Sonnet 5.5 for both crews; Claude Haiku 5.5 is run through the same evals as a challenger, and the operator switches if it passes. OpenRouter or other providers are deferred: a later swap is a config change under the swap-as-release rule, but the data-processing terms of any new provider must be reviewed first.
-- **OQ-A03** Build must verify that CrewAI/LiteLLM can call the 5.5-generation models without sending `temperature`, and whether it passes structured outputs and `effort`; if not, rely on `output_pydantic` plus a retry.
+- ~~**OQ-A03** Build must verify that CrewAI can call the 5.5-generation models without sending `temperature`, and whether it passes structured outputs and `effort`.~~ Resolved 2026-11-16 by `@backend.eng` (`backend.md` §7): no temperature is sent; structured output passes; effort is added by a request hook. **Review trigger**: re-run the check on any change of model, `crewai` or `anthropic` version.
 - ~~**OQ-A04** Per-user rate limit.~~ Accepted 2026-11-14: 10 suggest and 10 summarise actions per hour. **Review trigger**: revisit if the rate-limit hit rate exceeds 5% of sessions in the aggregate view.
 - ~~**OQ-11**~~ Resolved 2026-11-14: *matching only* fields are visible to the suggestion model, the admin, and own-circle facilitators (MD-022). This is enforced by CR-016. CR-002 and CR-015 are unchanged, because they govern the model and other participants.
 - **OQ-A05** Backend container host (Render, Fly.io or Railway): `@devops.eng` decides in Deliver.
@@ -410,3 +410,4 @@ Gold sets are synthetic profiles modelled on public patterns, never copied from 
 - 2026-11-15 — persona: `system-arch` — action: `*draw-diagram` — files: `project-context/diagrams/system-arch/deployment.html`, `deployment.svg` — type: deployment — `diagram-design` commit `0b9b10cab3dbf695642fa1a6c4b4f60df9083689` — self_check OK; not visually rendered in this session.
 - 2026-11-15 — persona: `system-arch` — action: record operator decision — kept option A (Vercel frontend + container backend). Rejected option B (one container, static Next.js export): it would need workaround URLs for dynamic routes and a later migration.
 - 2026-11-15 — persona: `system-arch` — action: `*decompose-work` and `*define-controls` (update) — added W16b and CR-017 (late attendance by claim or code), plus the attendance endpoints and data fields (PRD v1.2, US-025).
+- 2026-11-17 — persona: `system-arch` — action: record operator decision — the operator accepted all six spec-drift items reported in `backend.md`; the SAD now matches the build: native Anthropic provider instead of LiteLLM (Model and Context Strategy, Production Shape, §6); effort and model ids as environment settings applied by a request hook (§2); evidence quotes in the model-facing `ProfileDraft` schema (§2); two optional error-envelope keys (§4); three added environment names (§4); per-user rate limit (§4). OQ-A03 closed with a review trigger. No decision, control or threshold changed.
