@@ -96,6 +96,15 @@ class CircleCard(ApiModel):
     faith_context_label: str | None = Field(
         default=None, description="Shown only on faith-tagged circles, e.g. `Christian`."
     )
+    community_tagged: bool = Field(
+        default=False,
+        description="A circle for people who share a background, such as a country of origin. "
+        "Found by browsing only: never part of AI suggestions, and joining writes nothing "
+        "to the member's profile.",
+    )
+    community_label: str | None = Field(
+        default=None, description="Shown only on community-tagged circles, e.g. `Filipino`."
+    )
     admission_policy: AdmissionPolicy
     meeting_mode: MeetingMode | None = None
     area: Area | None = None

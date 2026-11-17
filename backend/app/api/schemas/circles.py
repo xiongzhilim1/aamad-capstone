@@ -58,6 +58,8 @@ class CircleCreate(ApiModel):
     area: Area | None = None
     faith_tagged: bool = False
     faith_context_label: FaithLabel | None = None
+    community_tagged: bool = False
+    community_label: FaithLabel | None = None
 
 
 class CircleUpdate(ApiModel):
@@ -72,6 +74,8 @@ class CircleUpdate(ApiModel):
     area: Area | None = None
     faith_tagged: bool | None = None
     faith_context_label: FaithLabel | None = None
+    community_tagged: bool | None = None
+    community_label: FaithLabel | None = None
 
 
 class MembershipResult(ApiModel):

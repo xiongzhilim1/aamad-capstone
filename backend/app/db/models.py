@@ -181,6 +181,10 @@ class Circle(Base):
     area: Mapped[str | None] = mapped_column(String(24))
     faith_tagged: Mapped[bool] = mapped_column(Boolean, default=False)
     faith_context_label: Mapped[str | None] = mapped_column(String(40))
+    # A circle for people who share a background (for example a country of origin). People
+    # find it by browsing and choose to join; it is never offered to the suggestion model.
+    community_tagged: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    community_label: Mapped[str | None] = mapped_column(String(40))
     synthetic: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = _now()
 

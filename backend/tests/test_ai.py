@@ -109,8 +109,12 @@ def test_cr001_cr002_only_eligible_people_and_allowlisted_fields_reach_the_promp
                and p["citable"]["stage"] == "new")  # fmt: skip
     assert mei["rank_only"] == {"challenges": ["cash_flow", "pricing"]}
     assert "challenges" not in mei["citable"]
-    # circles: Sam is already in Founders' Table; the faith circle needs his opt-in
+    # circles: Sam is already in Founders' Table; the faith circle needs his opt-in; the
+    # community circle is browse-only, so origin never reaches the model
     assert data["circles"] == []
+    assert "Filipino" not in raw and "Philippines" not in raw
+    api("grace").ok("POST", "/suggestions")  # even for a viewer with every opt-in
+    assert "Filipino" not in calls[-1]["inputs"]["payload"]
 
 
 def test_ac008_faith_reaches_the_prompt_only_with_both_opt_ins(

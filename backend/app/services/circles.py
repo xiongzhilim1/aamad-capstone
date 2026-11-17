@@ -28,11 +28,17 @@ def _circle(db: Session, circle_id: UUID) -> Circle:
 
 
 def list_circles(
-    db: Session, actor: Actor, faith_tagged: bool | None, mine: bool
+    db: Session,
+    actor: Actor,
+    faith_tagged: bool | None,
+    mine: bool,
+    community_tagged: bool | None = None,
 ) -> list[CircleCard]:
     circles = discovery.all_circles(db)
     if faith_tagged is not None:
         circles = [c for c in circles if c.faith_tagged == faith_tagged]
+    if community_tagged is not None:
+        circles = [c for c in circles if c.community_tagged == community_tagged]
     cards = discovery.circle_cards(db, actor, circles)
     if mine:
         cards = [c for c in cards if c.my_membership != "none" or c.i_am_facilitator]
@@ -83,10 +89,16 @@ def _check_faith(tagged: bool, label: str | None) -> None:
         raise ApiError(422, "validation_error", "A faith label needs the faith tag turned on.")
 
 
+def _check_community(tagged: bool, label: str | None) -> None:
+    if label and not tagged:
+        raise ApiError(422, "validation_error", "A community label needs its tag turned on.")
+
+
 def create(db: Session, actor: Actor, body: CircleCreate) -> CircleDetail:
     if db.get(User, body.facilitator_id) is None:
         raise not_found("We couldn't find that person.")
     _check_faith(body.faith_tagged, body.faith_context_label)
+    _check_community(body.community_tagged, body.community_label)
     data = body.model_dump(mode="json", exclude={"facilitator_id"})
     circle = Circle(**data)
     db.add(circle)
@@ -102,6 +114,8 @@ def update(db: Session, actor: Actor, circle_id: UUID, body: CircleUpdate) -> Ci
         setattr(circle, key, value)
     if not circle.faith_tagged:
         circle.faith_context_label = None
+    if not circle.community_tagged:
+        circle.community_label = None
     db.flush()
     return detail(db, actor, circle.id)
 

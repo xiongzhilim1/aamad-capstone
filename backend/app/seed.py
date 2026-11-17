@@ -179,11 +179,18 @@ def seed(db: Session) -> None:
                tags=["social_impact", "leadership"], admission_policy="open",
                member_list_visibility="everyone", meeting_mode="in_person",
                area="hong_kong_island", faith_tagged=True, faith_context_label="Christian"),
+        Circle(id=sid("circle-community"), name="Filipino Founders in Hong Kong",
+               purpose="A circle for founders with roots in the Philippines to share contacts, "
+                       "suppliers and encouragement. Anyone who feels at home here is welcome.",
+               tags=["finding_customers", "community_building"], admission_policy="open",
+               member_list_visibility="members", meeting_mode="either",
+               community_tagged=True, community_label="Filipino"),
     ])  # fmt: skip
     db.flush()
     db.add_all([
         CircleFacilitator(circle_id=sid("circle-table"), user_id=sid("felix")),
         CircleFacilitator(circle_id=sid("circle-faith"), user_id=sid("grace")),
+        CircleFacilitator(circle_id=sid("circle-community"), user_id=sid("chris")),
         CircleMembership(circle_id=sid("circle-table"), user_id=sid("sam"), status="member"),
         CircleMembership(circle_id=sid("circle-table"), user_id=sid("mei"), status="member"),
         CircleMembership(circle_id=sid("circle-table"), user_id=sid("ravi"), status="applicant"),

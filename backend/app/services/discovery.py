@@ -42,6 +42,8 @@ def circle_cards(db: Session, actor: Actor, circles: list[Circle]) -> list[Circl
                 tags=c.tags,
                 faith_tagged=c.faith_tagged,
                 faith_context_label=c.faith_context_label if c.faith_tagged else None,
+                community_tagged=c.community_tagged,
+                community_label=c.community_label if c.community_tagged else None,
                 admission_policy=c.admission_policy,
                 meeting_mode=c.meeting_mode,
                 area=c.area,

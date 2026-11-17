@@ -90,7 +90,8 @@ def build_context(
 
     People: opted in to the directory, not the viewer, not blocked either way, not already
     connected, capped at 50. Circles: not already joined, capped at 20. Faith-tagged circles
-    are offered only when the viewer opted faith into matching. Prompt ids are short and
+    are offered only when the viewer opted faith into matching, and community-tagged circles
+    are never offered. Prompt ids are short and
     opaque (`p01`, `c01`), so no database id or name reaches the model.
     """
     viewer = people.load_profile(db, actor.id)
@@ -105,6 +106,7 @@ def build_context(
         for c in discovery.all_circles(db)
         if policy.membership_status(db, c.id, actor.id) == "none"
         and (viewer_faith or not c.faith_tagged)
+        and not c.community_tagged  # browse-only: origin or background never reaches the model
     ][:MAX_CIRCLES]
     circle_ids = {f"c{i:02d}": c.id for i, c in enumerate(circles, 1)}
     by_circle = {c.id: c for c in circles}

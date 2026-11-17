@@ -53,12 +53,40 @@ def test_faith_tagged_circles_are_optional_and_write_no_faith_data(api: ApiFacto
     assert [c["name"] for c in tagged] == ["Faith & Work Circle"]
     assert tagged[0]["faith_context_label"] == "Christian"
     untagged = dee.ok("GET", "/circles", params={"faith_tagged": False})
-    assert [c["faith_context_label"] for c in untagged] == [None]
+    assert [c["faith_context_label"] for c in untagged] == [None, None]
     before = dee.ok("GET", "/me/profile")
     dee.ok("POST", f"/circles/{FAITH}/join")
     after = dee.ok("GET", "/me/profile")
     assert after["faith_context"] is None and after["faith_matching_opt_in"] is False
     assert before | {"updated_at": 0} == after | {"updated_at": 0}
+
+
+def test_community_circles_are_browse_only_and_write_nothing_to_the_profile(
+    api: ApiFactory,
+) -> None:
+    """Operator decision 2026-11-17: people who share a background bond by joining a circle.
+    Origin is never a profile field, a people filter or model input."""
+    dee = api("dee")
+    tagged = dee.ok("GET", "/circles", params={"community_tagged": True})
+    assert [(c["name"], c["community_label"]) for c in tagged] == [
+        ("Filipino Founders in Hong Kong", "Filipino")
+    ]
+    plain = dee.ok("GET", "/circles", params={"community_tagged": False})
+    assert all(c["community_label"] is None for c in plain) and len(plain) == 2
+    before = dee.ok("GET", "/me/profile")
+    cid = tagged[0]["id"]
+    assert dee.ok("POST", f"/circles/{cid}/join")["membership"] == "member"
+    assert before | {"updated_at": 0} == dee.ok("GET", "/me/profile") | {"updated_at": 0}
+    # nothing about the membership shows on her card to other people
+    card = next(
+        c for c in api("sam").ok("GET", "/directory")["people"] if c["display_name"] == "Dee"
+    )
+    assert "Filipino" not in json.dumps(card)
+    # there is no origin filter on people: an unknown query key changes nothing
+    everyone = api("sam").ok("GET", "/discover")["people"]
+    assert api("sam").ok("GET", "/discover", params={"origin": "Filipino"})["people"] == everyone
+    bad = {"name": "X", "purpose": "Y", "facilitator_id": uid("sam"), "community_label": "Thai"}
+    assert api("ada").error("POST", "/circles", 422, bad)  # a label needs its tag
 
 
 def test_only_facilitator_or_admin_can_edit_a_circle(api: ApiFactory) -> None:

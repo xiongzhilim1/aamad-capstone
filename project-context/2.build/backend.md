@@ -13,7 +13,7 @@ Backend built by `@backend.eng` (`*develop-be`, `*define-runtime`, `*implement-e
 | Two crews with guardrails, traces and fallbacks | Done; verified live on Sonnet 5.5 | `backend/app/crews/`, `backend/app/ai/` |
 | Rate limit, spend breaker, circuit breaker | Done | `backend/app/ai/controls.py` |
 | Synthetic seed data and persona login | Done. 13 personas | `backend/app/seed.py` |
-| Tests | 79 passing against Postgres; none calls a model | `backend/tests/` |
+| Tests | 80 passing against Postgres; none calls a model | `backend/tests/` |
 
 ## 2. API contract
 
@@ -94,6 +94,7 @@ The editable source of this figure is `project-context/diagrams/backend-eng/data
 - `attendance` has one writer function. Every change is appended to `attendance_log`, and leaving `confirmed` deletes the person's reconnection consent for that event in the same transaction.
 - `event_checkin_codes` stores an HMAC of the code, never the code. The code is returned once by `PUT /events/{id}/checkin-code`.
 - `model_traces` holds ids, counts, cost and latency only.
+- `circles.community_tagged` and `community_label` (migration `0002`) mark a circle for people who share a background, such as a country of origin. See Assumptions.
 
 Tables added beyond the SAD entity list: `attendance_log` (US-015 "corrections are recorded"), `checkin_attempts` (the 5-per-hour limit must survive restarts). `faith_matching_optin` is a column on `profiles`, not a table.
 
@@ -181,7 +182,7 @@ These are single runs on 13 personas, not the eval. The SAD sizing (50 candidate
 
 ## 8. Tests
 
-`uv run pytest -q` → 79 passed (2026-11-17), against a real Postgres database `peers_test` that the test session creates and migrates with Alembic. Each test starts from a fresh seed. A full run also fails when any of the 75 API operations has no test that gets a 2xx from it (route-coverage check in `tests/conftest.py`).
+`uv run pytest -q` → 80 passed (2026-11-17), against a real Postgres database `peers_test` that the test session creates and migrates with Alembic. Each test starts from a fresh seed. A full run also fails when any of the 75 API operations has no test that gets a 2xx from it (route-coverage check in `tests/conftest.py`).
 
 | File | Covers |
 |------|--------|
@@ -224,6 +225,7 @@ Also passing: `ruff check`, `ruff format --check`, `mypy --strict app`, `alembic
 - **Filters match public fields only.** Filtering on a `matching_only` field would let a viewer infer it.
 - **"Shared field" in W08** means the cited field is present on both sides, as the SAD words it, not that the values are equal. This keeps complementary matches (someone seeking a mentor and someone offering to mentor).
 - **Per-field visibility defaults**: `public`, except `faith_context`, which defaults to `matching_only`.
+- **Community circles (operator decision, 2026-11-17).** People who share a background, such as a country of origin, bond by joining a circle; origin is not a profile field. A community-tagged circle is found by browsing (`GET /circles?community_tagged=true`) and is never placed in the suggestion prompt, so origin cannot influence ranking. Joining writes a membership row only. There is no origin filter on people. The seed has one example, "Filipino Founders in Hong Kong". This follows the faith-tagged circle pattern (MD-010) and adds no model input, so MD-021 is unchanged.
 - **Circle creation** is admin-only, and the admin names the facilitator (PRD assumption, OQ-04).
 - **Events are visible to signed-in users only** (OQ-05 is open; there is no anonymous access anywhere).
 - **Cancelled events** keep their detail page and leave the listing.
@@ -240,6 +242,7 @@ Also passing: `ruff check`, `ruff format --check`, `mypy --strict app`, `alembic
   4. The error envelope has two extra optional keys, `fields` and `retry_at`.
   5. SAD §4 lists `SESSION_SECRET`-style names only; the backend adds `AI_EFFORT`, `COOKIE_SECURE` and `TRACE_LOG_DIR`.
   6. SAD §4 says the rate limit is per session; it is per user, which is stricter.
+- **KIV for `@product-mgr`: languages spoken** as a profile tag (for example Cantonese, Mandarin, English, Tagalog). The operator parked this on 2026-11-17. It would be a new profile field and a new permitted matching field, so it needs a PRD and MD-021 change before any build. A country-of-origin profile field was considered and not chosen.
 - **OQ-B01** Should a reason over 25 words be dropped (current, per SAD) or should the limit be relaxed? The first live run lost a third of its items to this before the prompt was tightened.
 - **OQ-B02** Confirm or change the tag vocabulary before `@qa.eng` writes the gold sets.
 - **OQ-B03** `TRACE_LOG_DIR` in the container, and whether `model-traces.jsonl` should be committed. It is git-ignored for now.
@@ -256,3 +259,5 @@ Also passing: `ruff check`, `ruff format --check`, `mypy --strict app`, `alembic
 - 2026-11-16 — persona: `backend-eng` — action: `*draw-diagram` — files: `project-context/diagrams/backend-eng/suggestion-sequence.html`, `suggestion-sequence.svg` — type: sequence — `diagram-design` commit `0b9b10cab3dbf695642fa1a6c4b4f60df9083689` — self_check OK; rendered and checked by eye.
 - 2026-11-16 — persona: `backend-eng` — action: `sync-docs` — operator approved all five descriptive updates; applied to `project-context/2.build/setup.md` (§1, §3, §4, §5). Spec drift is listed under Open Questions for `@system.arch`.
 - 2026-11-17 — persona: `backend-eng` — action: `*develop-be` (tests) — added success-path tests for `POST /requests/{id}/decline` and `DELETE /events/{id}/attendance-claims/me`, and a route-coverage check; 79 tests pass. No application source changed, so no doc sync was needed.
+- 2026-11-17 — persona: `backend-eng` — action: `*implement-endpoint` (update) — community-tagged circles: two columns on `circles` (migration `0002_community_circles`), `community_tagged` and `community_label` on the circle schemas, a `community_tagged` filter on `GET /circles`, exclusion from the suggestion candidate set, one seeded example; `backend/openapi.json` re-exported; 80 tests pass. No model call made.
+- 2026-11-17 — persona: `backend-eng` — action: `sync-docs` — Doc sync: no updates (setup.md states no fact this change made false).

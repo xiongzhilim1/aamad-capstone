@@ -28,8 +28,11 @@ def list_circles(
     db: Db,
     faith_tagged: Annotated[bool | None, Query(description="Filter by the faith tag.")] = None,
     mine: Annotated[bool, Query(description="Only circles I belong to or applied to.")] = False,
+    community_tagged: Annotated[
+        bool | None, Query(description="Filter by the community tag.")
+    ] = None,
 ) -> list[CircleCard]:
-    return circles.list_circles(db, actor, faith_tagged, mine)
+    return circles.list_circles(db, actor, faith_tagged, mine, community_tagged)
 
 
 @router.post(

@@ -608,6 +608,24 @@
               }
             ]
           },
+          "community_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shown only on community-tagged circles, e.g. `Filipino`.",
+            "title": "Community Label"
+          },
+          "community_tagged": {
+            "default": false,
+            "description": "A circle for people who share a background, such as a country of origin. Found by browsing only: never part of AI suggestions, and joining writes nothing to the member's profile.",
+            "title": "Community Tagged",
+            "type": "boolean"
+          },
           "faith_context_label": {
             "anyOf": [
               {
@@ -713,6 +731,24 @@
               }
             ]
           },
+          "community_label": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Community Label"
+          },
+          "community_tagged": {
+            "default": false,
+            "title": "Community Tagged",
+            "type": "boolean"
+          },
           "facilitator_id": {
             "format": "uuid",
             "title": "Facilitator Id",
@@ -802,6 +838,24 @@
                 "type": "null"
               }
             ]
+          },
+          "community_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shown only on community-tagged circles, e.g. `Filipino`.",
+            "title": "Community Label"
+          },
+          "community_tagged": {
+            "default": false,
+            "description": "A circle for people who share a background, such as a country of origin. Found by browsing only: never part of AI suggestions, and joining writes nothing to the member's profile.",
+            "title": "Community Tagged",
+            "type": "boolean"
           },
           "facilitators": {
             "items": {
@@ -961,6 +1015,30 @@
                 "type": "null"
               }
             ]
+          },
+          "community_label": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Community Label"
+          },
+          "community_tagged": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Community Tagged"
           },
           "faith_context_label": {
             "anyOf": [
@@ -4771,6 +4849,24 @@
               "description": "Only circles I belong to or applied to.",
               "title": "Mine",
               "type": "boolean"
+            }
+          },
+          {
+            "description": "Filter by the community tag.",
+            "in": "query",
+            "name": "community_tagged",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by the community tag.",
+              "title": "Community Tagged"
             }
           }
         ],
