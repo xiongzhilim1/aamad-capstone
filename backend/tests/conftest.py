@@ -37,8 +37,40 @@ from app.api.routes import session as session_routes  # noqa: E402
 from app.crews import runtime  # noqa: E402
 from app.crews.runtime import CallStats, CrewRun  # noqa: E402
 from app.db.session import new_session  # noqa: E402
+from app.main import app  # noqa: E402
 from app.settings import get_settings  # noqa: E402
 from tests.helpers import Api  # noqa: E402
+
+# Route coverage: every API operation must have at least one test that gets a 2xx from it.
+_route_hits: dict[tuple[str, str], set[int]] = {}
+
+
+@app.middleware("http")
+async def _record_route(request: Any, call_next: Any) -> Any:
+    response = await call_next(request)
+    route = request.scope.get("route")
+    if route is not None:
+        _route_hits.setdefault((request.method, route.path), set()).add(response.status_code)
+    return response
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """Fail a full, otherwise green run when an endpoint has no success-path test.
+
+    Skipped for partial runs (a file, a node id, -k or -m), where gaps are expected.
+    """
+    config = session.config
+    partial = config.getoption("keyword") or config.getoption("markexpr")
+    partial = partial or any("::" in a or a.endswith(".py") for a in config.args)
+    if exitstatus != 0 or partial or not session.testscollected:
+        return
+    declared = {(m.upper(), p) for p, item in app.openapi()["paths"].items() for m in item}
+    untested = sorted(k for k in declared if not any(s < 400 for s in _route_hits.get(k, ())))
+    if untested:
+        lines = "\n".join(f"  {method} {path}" for method, path in untested)
+        print(f"\nROUTE COVERAGE: no test gets a 2xx from:\n{lines}")
+        session.exitstatus = 1
+
 
 BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

@@ -13,7 +13,7 @@ Backend built by `@backend.eng` (`*develop-be`, `*define-runtime`, `*implement-e
 | Two crews with guardrails, traces and fallbacks | Done; verified live on Sonnet 5.5 | `backend/app/crews/`, `backend/app/ai/` |
 | Rate limit, spend breaker, circuit breaker | Done | `backend/app/ai/controls.py` |
 | Synthetic seed data and persona login | Done. 13 personas | `backend/app/seed.py` |
-| Tests | 77 passing against Postgres; none calls a model | `backend/tests/` |
+| Tests | 79 passing against Postgres; none calls a model | `backend/tests/` |
 
 ## 2. API contract
 
@@ -181,7 +181,7 @@ These are single runs on 13 personas, not the eval. The SAD sizing (50 candidate
 
 ## 8. Tests
 
-`uv run pytest -q` → 77 passed (2026-11-16), against a real Postgres database `peers_test` that the test session creates and migrates with Alembic. Each test starts from a fresh seed.
+`uv run pytest -q` → 79 passed (2026-11-17), against a real Postgres database `peers_test` that the test session creates and migrates with Alembic. Each test starts from a fresh seed. A full run also fails when any of the 75 API operations has no test that gets a 2xx from it (route-coverage check in `tests/conftest.py`).
 
 | File | Covers |
 |------|--------|
@@ -255,3 +255,4 @@ Also passing: `ruff check`, `ruff format --check`, `mypy --strict app`, `alembic
 - 2026-11-16 — persona: `backend-eng` — action: `*draw-diagram` — files: `project-context/diagrams/backend-eng/data-model.html`, `data-model.svg` — type: er — `diagram-design` commit `0b9b10cab3dbf695642fa1a6c4b4f60df9083689` — self_check OK; rendered and checked by eye.
 - 2026-11-16 — persona: `backend-eng` — action: `*draw-diagram` — files: `project-context/diagrams/backend-eng/suggestion-sequence.html`, `suggestion-sequence.svg` — type: sequence — `diagram-design` commit `0b9b10cab3dbf695642fa1a6c4b4f60df9083689` — self_check OK; rendered and checked by eye.
 - 2026-11-16 — persona: `backend-eng` — action: `sync-docs` — operator approved all five descriptive updates; applied to `project-context/2.build/setup.md` (§1, §3, §4, §5). Spec drift is listed under Open Questions for `@system.arch`.
+- 2026-11-17 — persona: `backend-eng` — action: `*develop-be` (tests) — added success-path tests for `POST /requests/{id}/decline` and `DELETE /events/{id}/attendance-claims/me`, and a route-coverage check; 79 tests pass. No application source changed, so no doc sync was needed.

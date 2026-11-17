@@ -320,3 +320,16 @@ def test_cancelled_events_accept_no_participant_actions(api: ApiFactory) -> None
     assert EVENING not in {e["id"] for e in mei.ok("GET", "/events")}
     assert mei.ok("GET", f"/events/{EVENING}")["state"] == "cancelled"
     assert mei.error("POST", f"/events/{EVENING}/registrations", 409)["code"] == "event_cancelled"
+
+
+def test_a_pending_claim_can_be_withdrawn(api: ApiFactory) -> None:
+    """ux.md Waiting state: "withdraw the claim"."""
+    dee, olivia = api("dee"), api("olivia")
+    dee.ok("POST", f"/events/{COFFEE}/attendance-claims", status=201)
+    assert len(olivia.ok("GET", f"/events/{COFFEE}/attendance")["claims"]) == 1
+    withdrawn = dee.ok("DELETE", f"/events/{COFFEE}/attendance-claims/me")
+    assert withdrawn == {"event_id": COFFEE, "attendance": "none", "attendance_source": None}
+    assert olivia.ok("GET", f"/events/{COFFEE}/attendance")["claims"] == []
+    # withdrawing does not undo a confirmed attendance
+    mei = api("mei")
+    assert mei.ok("DELETE", f"/events/{COFFEE}/attendance-claims/me")["attendance"] == "confirmed"

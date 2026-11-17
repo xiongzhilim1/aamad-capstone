@@ -191,3 +191,13 @@ def test_reports_reach_only_the_admin(api: ApiFactory) -> None:
         ("Sam", "Ken"),
     }
     assert all(r["created_at"] for r in reports)  # NFR-008
+
+
+def test_recipient_can_decline_and_nothing_is_created(api: ApiFactory) -> None:
+    """US-008: the success path of decline."""
+    mei, ravi = api("mei"), api("ravi")
+    assert mei.post(f"/requests/{uid('req-ravi-mei')}/decline").status_code == 204
+    assert mei.ok("GET", "/requests")["incoming"] == []
+    assert mei.ok("GET", "/connections") == [] and ravi.ok("GET", "/connections") == []
+    assert [r["person"]["display_name"] for r in ravi.ok("GET", "/requests")["outgoing"]] == ["Mei"]
+    assert mei.error("POST", f"/requests/{uid('req-ravi-mei')}/accept", 404)  # already answered
